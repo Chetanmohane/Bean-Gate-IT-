@@ -1929,6 +1929,7 @@ const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deletePaymentConfirmId, setDeletePaymentConfirmId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Stateful student registration lists backed by localStorage
@@ -2042,6 +2043,21 @@ const AdminPanel = () => {
       console.error("Failed to delete registration", e);
     }
     setDeleteConfirmId(null);
+  };
+
+  const handleDeletePayment = async (id: string) => {
+    if (id) setDeletePaymentConfirmId(id);
+  };
+
+  const confirmDeletePayment = async () => {
+    if (!deletePaymentConfirmId) return;
+    try {
+      await fetch(`/api/payments/${deletePaymentConfirmId}`, { method: "DELETE" });
+      fetchRegistrationsAndPayments();
+    } catch (e) {
+      console.error("Failed to delete payment", e);
+    }
+    setDeletePaymentConfirmId(null);
   };
 
   const handleEditRegistration = async (oldEmail: string, oldPhone: string, updatedReg: Registration, id?: string) => {
@@ -2388,7 +2404,7 @@ const AdminPanel = () => {
               onEditRegistration={handleEditRegistration}
             />
           )}
-          {activeTab === "payments"       && <PaymentsTab payments={filteredPayments} onAddPayment={openDueModal} userRole={userRole} />}
+          {activeTab === "payments"       && <PaymentsTab payments={filteredPayments} onAddPayment={openDueModal} onDeletePayment={handleDeletePayment} userRole={userRole} />}
           {activeTab === "plans"          && userRole === "admin" && <PlansTab />}
           {activeTab === "referrals"      && userRole === "admin" && <ReferralTab />}
           {activeTab === "subadmins"      && userRole === "admin" && <SubAdminsTab registrations={registrations} payments={payments} />}
@@ -2577,6 +2593,33 @@ const AdminPanel = () => {
               </button>
               <button 
                 onClick={confirmDelete} 
+                className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition text-sm cursor-pointer border-none shadow-md shadow-red-500/20"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Delete Payment Confirmation Modal */}
+      {deletePaymentConfirmId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#0e1726] border border-slate-200 dark:border-white/10 rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FaTrash className="text-red-500 text-2xl" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Delete Payment?</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Are you sure you want to delete this payment record? This action cannot be undone.</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setDeletePaymentConfirmId(null)} 
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 rounded-xl font-bold transition text-sm cursor-pointer border-none"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDeletePayment} 
                 className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition text-sm cursor-pointer border-none shadow-md shadow-red-500/20"
               >
                 Yes, Delete
