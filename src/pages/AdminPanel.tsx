@@ -143,7 +143,7 @@ const getRemainingBalance = (email: string, phone: string, payments: Payment[]):
   // If they only have 1st Installment(s)
   const firstInstallmentPayment = studentPayments.find(p => p.planTitle.toLowerCase().includes("1st") || p.planTitle.toLowerCase().includes("first"));
   if (firstInstallmentPayment) {
-    const amt = parseInt(firstInstallmentPayment.planAmount.replace(/[₹,]/g, ""));
+    const amt = parseInt(String(firstInstallmentPayment.planAmount).replace(/[₹,]/g, ""));
     if (amt <= 2880) return "₹2,880";
     return "₹3,200";
   }
@@ -1646,13 +1646,8 @@ const PaymentsTab = ({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Deduplicate: show latest record per unique student (by email)
-  const uniqueStudents = payments.reduce<Payment[]>((acc, p) => {
-    if (!acc.some(x => x.email.toLowerCase() === p.email.toLowerCase())) acc.push(p);
-    return acc;
-  }, []);
-
-  const filtered = uniqueStudents.filter(p => {
+  // Show all individual payment transactions (no deduplication so all UTRs are visible)
+  const filtered = payments.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
                           p.email.toLowerCase().includes(search.toLowerCase()) ||
                           p.transactionId.toLowerCase().includes(search.toLowerCase());
@@ -1688,12 +1683,12 @@ const PaymentsTab = ({
       return;
     }
     
-    const headers = ["Name", "Email", "Phone", "Last UTR / TXN ID", "Plan", "Total Paid", "Remaining Dues", "Time"];
+    const headers = ["Name", "Email", "Phone", "UTR / TXN ID", "Plan / Option", "Paid Amount", "Total Paid", "Remaining Dues", "Time"];
     const rows = filtered.map(p => {
       const remaining = getRemainingBalance(p.email, p.phone, payments);
       const totalPaid = payments
         .filter(x => x.email.toLowerCase() === p.email.toLowerCase())
-        .reduce((acc, x) => acc + parseInt(x.planAmount.replace(/[₹,]/g, "") || "0"), 0);
+        .reduce((acc, x) => acc + parseInt(String(x.planAmount).replace(/[₹,]/g, "") || "0"), 0);
       
       return [
         `"${p.name}"`, 
@@ -1701,6 +1696,7 @@ const PaymentsTab = ({
         `"${p.phone}"`, 
         `"${p.transactionId}"`, 
         `"${p.planTitle}"`, 
+        `"${p.planAmount}"`,
         `"${totalPaid}"`, 
         `"${remaining}"`, 
         `"${p.timestamp}"`
@@ -1777,7 +1773,7 @@ const PaymentsTab = ({
           <table className="w-full text-sm min-w-[1000px]">
             <thead>
               <tr className="bg-slate-50/80 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
-                {["Name", "Email", "Last UTR / TXN ID", "Plan", "Total Paid", "Remaining Dues", "Time"].map(h => (
+                {["Name", "Email", "UTR / TXN ID", "Plan / Option", "Paid Amount", "Total Paid", "Remaining Dues", "Time"].map(h => (
                   <th key={h} className="text-left px-5 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{h}</th>
                 ))}
                 {userRole === "admin" && (
@@ -1792,7 +1788,7 @@ const PaymentsTab = ({
                 // Sum all payments for this student
                 const totalPaid = payments
                   .filter(x => x.email.toLowerCase() === p.email.toLowerCase())
-                  .reduce((acc, x) => acc + parseInt(x.planAmount.replace(/[₹,]/g, "") || "0"), 0);
+                  .reduce((acc, x) => acc + parseInt(String(x.planAmount).replace(/[₹,]/g, "") || "0"), 0);
                 return (
                   <tr key={i} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/5 transition">
                     <td className="px-5 py-4 font-bold text-slate-900 dark:text-white text-sm">{p.name}</td>
@@ -1800,6 +1796,9 @@ const PaymentsTab = ({
                     <td className="px-5 py-4 font-mono text-slate-700 dark:text-slate-200 text-xs font-bold tracking-wider">{p.transactionId}</td>
                     <td className="px-5 py-4">
                       <span className="bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400 text-xs font-bold px-2.5 py-1 rounded-full border border-violet-100 dark:border-violet-500/20">{p.planTitle}</span>
+                    </td>
+                    <td className="px-5 py-4 font-bold text-slate-700 dark:text-slate-300 text-sm">
+                      {String(p.planAmount).startsWith("₹") ? p.planAmount : `₹${parseInt(String(p.planAmount)).toLocaleString("en-IN")}`}
                     </td>
                     <td className="px-5 py-4 font-extrabold text-emerald-600 dark:text-emerald-400 text-sm">₹{totalPaid.toLocaleString("en-IN")}</td>
                     <td className="px-5 py-4">
@@ -1830,7 +1829,7 @@ const PaymentsTab = ({
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={userRole === "admin" ? 8 : 7} className="px-5 py-8 text-center text-slate-400 dark:text-slate-500 text-sm font-semibold">No payment records found.</td></tr>
+                <tr><td colSpan={userRole === "admin" ? 9 : 8} className="px-5 py-8 text-center text-slate-400 dark:text-slate-500 text-sm font-semibold">No payment records found.</td></tr>
               )}
             </tbody>
           </table>
