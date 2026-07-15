@@ -27,7 +27,8 @@ const Trainer = () => {
               <div className="w-full sm:w-56 md:w-64 flex justify-center shrink-0">
                 <img
                   src={pic}
-                  className="w-52 h-64 sm:w-56 sm:h-72 object-cover rounded-xl shadow-md"
+                  alt="Pratiksha Bora"
+                  className="w-full max-w-[260px] aspect-[4/5] object-cover object-center rounded-2xl shadow-lg border border-slate-100"
                 />
               </div>
 
