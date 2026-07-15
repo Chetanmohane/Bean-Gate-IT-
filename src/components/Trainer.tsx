@@ -8,7 +8,7 @@ const Trainer = () => {
     { title: "Study Notes", desc: "Comprehensive PDF guides and cheatsheets.", icon: <FaBookOpen className="text-green-500 text-2xl" />, bg: "bg-green-50" },
     { title: "Source Code", desc: "Full production-ready GitHub repositories.", icon: <FaCode className="text-orange-500 text-2xl" />, bg: "bg-orange-50" },
     { title: "Live Projects", desc: "Develop commercial projects for your portfolio.", icon: <FaCheckCircle className="text-blue-500 text-2xl" />, bg: "bg-blue-50" },
-    { title: "Certificate", desc: "Verified ISO-certified LinkedIn-ready certificate.", icon: <FaCertificate className="text-purple-500 text-2xl" />, bg: "bg-purple-50" },
+    { title: "Certificate", desc: "Course completion certificate to showcase your skills.", icon: <FaCertificate className="text-purple-500 text-2xl" />, bg: "bg-purple-50" },
     { title: "Placement Help", desc: "Mock interviews & partner job referrals.", icon: <FaUserTie className="text-teal-500 text-2xl" />, bg: "bg-teal-50" },
   ];
 

@@ -11,6 +11,7 @@ const FAQ = () => {
     { q: "Which language will be used in the course?", a: "The course will be taught in a mix of Hindi and English for better understanding." },
     { q: "What is the duration of the course?", a: "The course duration is 3 months with daily practical sessions." },
     { q: "Will I get a certificate?", a: "Yes, a certificate of completion will be provided after you finish the projects." },
+    { q: "Will I get an internship certificate after the course?", a: "Yes! Upon successful completion of the course, you will receive a 3-month Internship Completion Certificate from BeanGate IT Solutions, highlighting your experience working on live projects." },
   ];
 
   const toggleFAQ = (index) => {

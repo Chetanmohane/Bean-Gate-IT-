@@ -386,7 +386,7 @@ const PlansTab = () => {
       {/* Course Info */}
       <Card className="p-6 mb-6 mt-6">
         <p className="text-sm font-extrabold text-slate-800 dark:text-white mb-4">Course Information</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label className={labelCls}>Course Name</label>
             <input className={inputCls} value={cfg.courseName} onChange={e => update("courseName", e.target.value)} placeholder="e.g. MERN Stack" />
@@ -395,14 +395,14 @@ const PlansTab = () => {
             <label className={labelCls}>Course Tagline</label>
             <input className={inputCls} value={cfg.courseTagline} onChange={e => update("courseTagline", e.target.value)} placeholder="e.g. Full Stack Web Development" />
           </div>
-          <div>
+          <div className="sm:col-span-2 lg:col-span-1">
             <label className={labelCls}>Referral Code Discount (%)</label>
             <input type="number" min="0" max="50" className={inputCls} value={cfg.discountPercent} onChange={e => update("discountPercent", parseInt(e.target.value) || 0)} />
           </div>
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ONE-TIME PLAN */}
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-5">
@@ -410,7 +410,7 @@ const PlansTab = () => {
             <p className="font-extrabold text-slate-800 dark:text-white text-sm">One-Time Payment Plan</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
             <div>
               <label className={labelCls}>Full Price (₹)</label>
               <input type="number" min="0" className={inputCls} value={cfg.oneTimePrice} onChange={e => update("oneTimePrice", parseInt(e.target.value) || 0)} />
@@ -452,7 +452,7 @@ const PlansTab = () => {
             <p className="font-extrabold text-slate-800 dark:text-white text-sm">Flexible Installment Plan</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
             <div>
               <label className={labelCls}>1st Installment (₹)</label>
               <input type="number" min="0" className={inputCls} value={cfg.installment1Price} onChange={e => update("installment1Price", parseInt(e.target.value) || 0)} />
@@ -884,58 +884,106 @@ const ReferralTab = () => {
       </Card>
 
       {/* Search and Filters */}
-      {/* Search and Filters */}
       <div className="flex flex-col gap-4 mb-5">
-        <div className="flex flex-col xl:flex-row gap-4 w-full">
-          <div className="relative flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
+          <div className="relative lg:col-span-1">
             <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm" />
             <input value={search} onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by code or creator..."
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200" />
           </div>
           
-          <div className="flex flex-wrap gap-4">
-            <div className="w-full sm:w-48">
-              <select 
-                value={filterStatus} 
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full px-4 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200 appearance-none"
-              >
-                <option value="All">All Status</option>
-                <option value="Available">Available</option>
-                <option value="Used">Used</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:col-span-2">
+            <select 
+              value={filterStatus} 
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200 cursor-pointer"
+            >
+              <option value="All">All Status</option>
+              <option value="Available">Available</option>
+              <option value="Used">Used</option>
+              <option value="Inactive">Inactive</option>
+            </select>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full">
               <input 
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full sm:w-36 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200"
+                className="w-1/2 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-xs outline-none focus:border-indigo-500 transition duration-200 cursor-pointer"
               />
-              <span className="text-slate-400 text-sm">to</span>
+              <span className="text-slate-400 text-xs">to</span>
               <input 
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full sm:w-36 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200"
+                className="w-1/2 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-xs outline-none focus:border-indigo-500 transition duration-200 cursor-pointer"
               />
             </div>
-            
-            <button 
-              onClick={handleDownloadCSV}
-              className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold rounded-xl transition duration-200 cursor-pointer border-none shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto"
-            >
-              Export CSV
-            </button>
           </div>
+        </div>
+        
+        <div className="flex justify-end">
+          <button 
+            onClick={handleDownloadCSV}
+            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold rounded-xl transition duration-200 cursor-pointer border-none shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto"
+          >
+            Export CSV
+          </button>
         </div>
       </div>
 
-      {/* Codes Table */}
-      <Card className="overflow-hidden">
+      {/* Mobile Card List View */}
+      <div className="md:hidden space-y-4 mb-6">
+        {filteredCodes.map((c, i) => {
+          const idx = codes.findIndex(x => x.code === c.code);
+          return (
+            <Card key={i} className="p-5 space-y-3.5 border border-slate-100 dark:border-white/5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-extrabold text-slate-900 dark:text-white font-mono tracking-wider text-base">{c.code}</span>
+                  <button onClick={() => copyCode(c.code)} className="text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 bg-transparent border-none cursor-pointer p-1.5 flex items-center justify-center">
+                    <FaCopy className="text-xs" />
+                  </button>
+                  {copied === c.code && <span className="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase">Copied!</span>}
+                </div>
+                
+                <span className="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-black px-2.5 py-1 rounded-full border border-indigo-100 dark:border-indigo-500/20">{c.discount} OFF</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs border-t border-b border-slate-100 dark:border-white/5 py-3">
+                <div>
+                  <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">Creator</span>
+                  <p className="text-slate-800 dark:text-slate-200 font-mono font-bold mt-0.5">{c.creator || "admin"}</p>
+                </div>
+                <div>
+                  <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">Created</span>
+                  <p className="text-slate-800 dark:text-slate-200 font-semibold mt-0.5">{c.created}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <button onClick={() => toggleCode(idx)}
+                  className={`text-xs font-bold px-3 py-1.5 rounded-full border cursor-pointer transition duration-200 ${c.active && c.uses === 0 ? "bg-green-50 text-green-600 border-green-100 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20" : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-white/5 dark:text-slate-400 dark:border-white/10"}`}>
+                  {c.active && c.uses === 0 ? "Available" : c.uses > 0 ? "Used" : "Inactive"}
+                </button>
+                
+                <button onClick={() => deleteCode(idx)} className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center">
+                  <FaTrash className="text-xs" />
+                </button>
+              </div>
+            </Card>
+          );
+        })}
+        {filteredCodes.length === 0 && (
+          <div className="bg-white dark:bg-[#0e1726]/80 p-8 text-center text-slate-400 dark:text-slate-500 rounded-3xl border border-slate-100 dark:border-white/5 font-semibold text-sm">
+            No referral codes found.
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <Card className="hidden md:block overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[700px]">
             <thead>
@@ -1066,8 +1114,44 @@ const SubAdminCodesTab = ({ username }: { username: string }) => {
         </div>
       </Card>
 
-      {/* Codes Table */}
-      <Card className="overflow-hidden">
+      {/* Mobile Card List View */}
+      <div className="md:hidden space-y-4 mb-6">
+        {myCodes.length === 0 ? (
+          <div className="bg-white dark:bg-[#0e1726]/80 p-8 text-center text-slate-400 dark:text-slate-500 rounded-3xl border border-slate-100 dark:border-white/5 font-semibold text-sm">
+            No codes generated yet. Click "Generate Code" to create one.
+          </div>
+        ) : (
+          [...myCodes].reverse().map((c, i) => (
+            <Card key={i} className="p-5 space-y-3.5 border border-slate-100 dark:border-white/5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-extrabold text-slate-900 dark:text-white font-mono tracking-wider text-sm">{c.code}</span>
+                  <button onClick={() => copyCode(c.code)} className="text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 bg-transparent border-none cursor-pointer p-1.5 flex items-center justify-center">
+                    <FaCopy className="text-xs" />
+                  </button>
+                  {copied === c.code && <span className="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase">Copied!</span>}
+                </div>
+                
+                <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${
+                  c.uses > 0
+                    ? "bg-slate-100 text-slate-500 border-slate-200 dark:bg-white/5 dark:text-slate-400 dark:border-white/10"
+                    : "bg-green-50 text-green-600 border-green-100 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20"
+                }`}>
+                  {c.uses > 0 ? "Used" : "Available"}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center text-xs border-t border-slate-100 dark:border-white/5 pt-3">
+                <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">Created Date</span>
+                <span className="text-slate-800 dark:text-slate-200 font-semibold">{c.created}</span>
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <Card className="hidden md:block overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[500px]">
             <thead>
@@ -1323,7 +1407,146 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
       </Card>
 
       {/* Sub Admins List with Referral Details */}
-      <Card className="overflow-hidden">
+      {/* Mobile Card List View */}
+      <div className="lg:hidden space-y-4 mb-6">
+        {subadmins.length === 0 ? (
+          <div className="bg-white dark:bg-[#0e1726]/80 p-8 text-center text-slate-400 dark:text-slate-500 rounded-3xl border border-slate-100 dark:border-white/5 font-semibold text-sm">
+            No sub-admin accounts created yet.
+          </div>
+        ) : (
+          subadmins.map((s, idx) => {
+            const { referredRegs, referredPays } = getReferredStudents(s.username);
+            const subCodes = getSubadminCodes(s.username);
+            const isExpanded = expandedSubadmin === s.id;
+            const paidReferredStudents = referredRegs.filter(r =>
+              referredPays.some(p => p.email.toLowerCase() === r.email.toLowerCase() || p.phone === r.phone)
+            );
+            const totalReferredRevenue = referredPays.reduce((acc, p) => acc + parseInt(p.planAmount.replace(/[₹,]/g, "") || "0"), 0);
+
+            return (
+              <Card key={s.id} className="p-5 border border-slate-100 dark:border-white/5 space-y-3.5">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-2" onClick={() => setExpandedSubadmin(isExpanded ? null : s.id)}>
+                  <div className="flex items-center gap-2 cursor-pointer">
+                    {isExpanded ? <FaChevronUp className="text-indigo-500 text-xs" /> : <FaChevronDown className="text-slate-400 text-xs" />}
+                    <div>
+                      <h4 className="font-extrabold text-slate-900 dark:text-white text-base">{s.name}</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">{s.username}</p>
+                    </div>
+                  </div>
+
+                  <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${s.status === "Active" ? "bg-green-50 text-green-600 border-green-100 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20" : "bg-red-50 text-red-600 border-red-100 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20"}`} onClick={(e) => { e.stopPropagation(); toggleStatus(idx); }}>
+                    {s.status}
+                  </span>
+                </div>
+
+                {/* Password / Basic Info */}
+                <div className="text-xs space-y-1.5 bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-100 dark:border-white/5">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">Password</span>
+                    <span className="font-mono text-slate-800 dark:text-slate-200 font-bold">{s.password}</span>
+                  </div>
+                  <div className="flex justify-between border-t border-slate-100 dark:border-white/5 pt-1.5 mt-1.5">
+                    <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">Referrals</span>
+                    <span className="text-slate-800 dark:text-slate-200 font-bold">
+                      {paidReferredStudents.length} Student{paidReferredStudents.length !== 1 ? "s" : ""} · {subCodes.length} Code{subCodes.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Expanded Referral Details */}
+                {isExpanded && (
+                  <div className="border-t border-slate-100 dark:border-white/5 pt-3.5 space-y-4">
+                    {/* Summary Stats */}
+                    <div className="grid grid-cols-3 gap-2.5">
+                      <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl p-2.5 text-center">
+                        <p className="text-[8px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-0.5">Codes</p>
+                        <p className="text-sm font-extrabold text-slate-900 dark:text-white">{subCodes.length}</p>
+                      </div>
+                      <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl p-2.5 text-center">
+                        <p className="text-[8px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-0.5">Referred</p>
+                        <p className="text-sm font-extrabold text-indigo-600 dark:text-indigo-400">{paidReferredStudents.length}</p>
+                      </div>
+                      <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl p-2.5 text-center">
+                        <p className="text-[8px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-0.5">Revenue</p>
+                        <p className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">₹{totalReferredRevenue.toLocaleString("en-IN")}</p>
+                      </div>
+                    </div>
+
+                    {/* Referral Codes List */}
+                    {subCodes.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Referral Codes</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {subCodes.map((c, ci) => (
+                            <span key={ci} className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded border ${
+                              c.uses > 0
+                                ? "bg-slate-100 text-slate-500 border-slate-200 dark:bg-white/5 dark:text-slate-400 dark:border-white/10 line-through"
+                                : c.active
+                                  ? "bg-green-50 text-green-600 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20"
+                                  : "bg-red-50 text-red-500 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20"
+                            }`}>
+                              {c.code}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Referred Students List */}
+                    <div className="space-y-2">
+                      <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Referred Students Details</p>
+                      {paidReferredStudents.length === 0 ? (
+                        <p className="text-xs text-slate-400 dark:text-slate-550 font-semibold py-1">No students referred yet by this sub-admin.</p>
+                      ) : (
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                          {paidReferredStudents.map((r, ri) => {
+                            const studentPayment = referredPays.find(p => p.email.toLowerCase() === r.email.toLowerCase() || p.phone === r.phone);
+                            const totalPaid = referredPays
+                              .filter(p => p.email.toLowerCase() === r.email.toLowerCase())
+                              .reduce((acc, p) => acc + parseInt(p.planAmount.replace(/[₹,]/g, "") || "0"), 0);
+                            return (
+                              <div key={ri} className="bg-slate-50/50 dark:bg-white/[0.02] border border-slate-150 dark:border-white/5 p-3 rounded-lg text-xs space-y-1">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <p className="font-bold text-slate-800 dark:text-white">{r.name}</p>
+                                    <p className="text-[10px] text-slate-500 mt-0.5">{r.email}</p>
+                                  </div>
+                                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400">₹{totalPaid.toLocaleString("en-IN")}</span>
+                                </div>
+                                <div className="flex justify-between text-[10px] text-slate-500 pt-1.5 border-t border-slate-100 dark:border-white/5 mt-1.5">
+                                  <span>{r.course}</span>
+                                  <span className="font-mono bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-1 py-0.5 rounded">{r.referralCode}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Card Actions */}
+                <div className="flex justify-between items-center text-xs pt-1 border-t border-slate-100 dark:border-white/5 pt-3">
+                  <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">Actions</span>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleEditClick(s)} className="p-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center">
+                      <FaEdit className="text-xs" />
+                    </button>
+                    <button onClick={() => deleteSub(idx)} className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center">
+                      <FaTrash className="text-xs" />
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <Card className="hidden lg:block overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[600px]">
             <thead>
@@ -1630,17 +1853,17 @@ const RegistrationsTab = ({
       {/* Search & Filters & Actions */}
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 w-full">
-          <div className="flex flex-col sm:flex-row gap-4 flex-1 w-full xl:max-w-4xl">
-            <div className="relative flex-1 max-w-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-1 w-full">
+            <div className="relative w-full">
               <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm" />
               <input value={search} onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name, email or course..."
+                placeholder="Search name, email, course..."
                 className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200" />
             </div>
             <select 
               value={filterCourse} 
               onChange={(e) => setFilterCourse(e.target.value)}
-              className="w-full sm:w-44 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200"
+              className="w-full px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200 cursor-pointer"
             >
               <option value="All">All Courses</option>
               {uniqueCourses.map(c => <option key={c} value={c}>{c}</option>)}
@@ -1648,25 +1871,25 @@ const RegistrationsTab = ({
             <select 
               value={filterPayment} 
               onChange={(e) => setFilterPayment(e.target.value)}
-              className="w-full sm:w-44 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200"
+              className="w-full px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200 cursor-pointer"
             >
               <option value="All">All Payments</option>
               <option value="Paid">Only Paid</option>
               <option value="Unpaid">Only Unpaid</option>
             </select>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2 w-full">
               <input 
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="flex-1 sm:w-36 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200 cursor-pointer"
+                className="w-1/2 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-xs outline-none focus:border-indigo-500 transition duration-200 cursor-pointer"
               />
               <span className="text-slate-400 self-center shrink-0">-</span>
               <input 
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="flex-1 sm:w-36 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200 cursor-pointer"
+                className="w-1/2 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-xs outline-none focus:border-indigo-500 transition duration-200 cursor-pointer"
               />
             </div>
           </div>
@@ -1684,7 +1907,80 @@ const RegistrationsTab = ({
         </div>
       </div>
 
-      <Card className="overflow-hidden">
+      {/* Mobile Card List View */}
+      <div className="md:hidden space-y-4 mb-6">
+        {filtered.map((r, i) => {
+          const hasPayment = payments.some(p => p.email.toLowerCase() === r.email.toLowerCase() || p.phone === r.phone);
+          return (
+            <Card key={i} className="p-5 space-y-3.5 border border-slate-100 dark:border-white/5">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h4 className="font-extrabold text-slate-900 dark:text-white text-base">{r.name}</h4>
+                  <p className="text-slate-550 dark:text-slate-400 text-xs mt-0.5 break-all">{r.email}</p>
+                </div>
+                <div className="shrink-0">
+                  {hasPayment ? (
+                    <span className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[10px] font-black tracking-wider uppercase px-2.5 py-1 rounded-full border border-emerald-100 dark:border-emerald-500/20">Paid</span>
+                  ) : (
+                    <span className="bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 text-[10px] font-black tracking-wider uppercase px-2.5 py-1 rounded-full border border-rose-100 dark:border-rose-500/20">Unpaid</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs border-t border-b border-slate-100 dark:border-white/5 py-3">
+                <div>
+                  <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">Phone</span>
+                  <p className="text-slate-800 dark:text-slate-200 font-mono font-medium mt-0.5">{r.phone}</p>
+                </div>
+                <div>
+                  <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">Course</span>
+                  <div className="mt-0.5">
+                    <span className="bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded border border-blue-100 dark:border-blue-500/20">{r.course}</span>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">College</span>
+                  <p className="text-slate-800 dark:text-slate-200 font-semibold mt-0.5 truncate">{r.college || "N/A"}</p>
+                </div>
+                <div>
+                  <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">City</span>
+                  <p className="text-slate-800 dark:text-slate-200 font-semibold mt-0.5">{r.city || "N/A"}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-xs pt-1">
+                <span className="text-slate-450 dark:text-slate-500 font-semibold">{r.timestamp}</span>
+                {userRole === "admin" && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setEditingStudent(r)}
+                      className="p-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center"
+                      title="Edit Student"
+                    >
+                      <FaEdit className="text-xs" />
+                    </button>
+                    <button
+                      onClick={() => onDeleteRegistration(r.email, r.phone, (r as any)._id || (r as any).id)}
+                      className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center"
+                      title="Delete Student"
+                    >
+                      <FaTrash className="text-xs" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </Card>
+          );
+        })}
+        {filtered.length === 0 && (
+          <div className="bg-white dark:bg-[#0e1726]/80 p-8 text-center text-slate-400 dark:text-slate-500 rounded-3xl border border-slate-100 dark:border-white/5 font-semibold text-sm">
+            No registrations found.
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <Card className="hidden md:block overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[800px]">
             <thead>
@@ -1986,7 +2282,7 @@ const PaymentsTab = ({
         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">All student payments. Use <span className="text-indigo-500 font-bold">Update Due</span> to record remaining installment payments.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         <div className="bg-white dark:bg-[#0e1726]/40 backdrop-blur-md border border-slate-100 dark:border-white/5 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:scale-[1.02] transition duration-200">
           <div>
             <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Transactions</p>
@@ -2007,7 +2303,7 @@ const PaymentsTab = ({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0e1726]/40 backdrop-blur-md border border-slate-100 dark:border-white/5 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:scale-[1.02] transition duration-200">
+        <div className="bg-white dark:bg-[#0e1726]/40 backdrop-blur-md border border-slate-100 dark:border-white/5 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:scale-[1.02] transition duration-200 sm:col-span-2 lg:col-span-1">
           <div>
             <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Outstanding Dues</p>
             <h3 className="text-2xl font-black text-rose-500 dark:text-rose-400 tracking-tight">₹{totalDues.toLocaleString("en-IN")}</h3>
@@ -2019,41 +2315,122 @@ const PaymentsTab = ({
       </div>
 
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col xl:flex-row gap-4 w-full">
-          <div className="relative flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
+          <div className="relative lg:col-span-1">
             <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm" />
             <input value={search} onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name, email or UTR..."
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200" />
           </div>
           
-          <div className="flex flex-wrap gap-4">
-            <div className="w-full sm:w-48">
-              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full px-3 py-2.5 bg-white border border-slate-200 dark:bg-[#1a233a] dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 cursor-pointer">
-                <option value="All">All Status</option>
-                <option value="Cleared">Cleared</option>
-                <option value="Has Dues">Has Dues</option>
-              </select>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:col-span-2">
+            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 cursor-pointer">
+              <option value="All">All Status</option>
+              <option value="Cleared">Cleared</option>
+              <option value="Has Dues">Has Dues</option>
+            </select>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full">
               <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-                className="px-3 py-2 bg-white border border-slate-200 dark:bg-[#1a233a] dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-xs outline-none focus:border-indigo-500 cursor-pointer" />
+                className="w-1/2 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-xs outline-none focus:border-indigo-500 cursor-pointer" />
               <span className="text-slate-400 text-xs">to</span>
               <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
-                className="px-3 py-2 bg-white border border-slate-200 dark:bg-[#1a233a] dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-xs outline-none focus:border-indigo-500 cursor-pointer" />
+                className="w-1/2 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-xs outline-none focus:border-indigo-500 cursor-pointer" />
             </div>
-
-            <button onClick={handleDownloadCSV}
-              className="px-5 py-2.5 bg-[#0e1726] hover:bg-[#1b253b] text-white text-xs font-extrabold rounded-xl transition duration-150 flex items-center gap-1.5 cursor-pointer border-none shadow-md">
-              Export CSV
-            </button>
           </div>
+        </div>
+
+        <div className="flex justify-end">
+          <button onClick={handleDownloadCSV}
+            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-extrabold rounded-xl transition duration-150 flex items-center justify-center gap-1.5 cursor-pointer border-none shadow-md w-full sm:w-auto">
+            Export CSV
+          </button>
         </div>
       </div>
 
-      <Card className="overflow-hidden">
+      {/* Mobile Card List View */}
+      <div className="lg:hidden space-y-4 mb-6">
+        {filtered.map((p, i) => {
+          const remaining = getRemainingBalance(p.email, p.phone, payments);
+          const hasDues = remaining !== "₹0";
+          const totalPaid = payments
+            .filter(x => x.email.toLowerCase() === p.email.toLowerCase())
+            .reduce((acc, x) => acc + parseInt(String(x.planAmount).replace(/[₹,]/g, "") || "0"), 0);
+          
+          return (
+            <Card key={i} className="p-5 space-y-3.5 border border-slate-100 dark:border-white/5">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h4 className="font-extrabold text-slate-900 dark:text-white text-base">{p.name}</h4>
+                  <p className="text-slate-550 dark:text-slate-400 text-xs mt-0.5 break-all">{p.email}</p>
+                </div>
+                <div className="shrink-0">
+                  <span className={`text-[9px] font-black tracking-wider px-2 py-0.5 rounded uppercase ${getPlanBadgeClass(p.planTitle)}`}>
+                    {p.planTitle}
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-xs space-y-1 bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-100 dark:border-white/5">
+                <div className="flex justify-between">
+                  <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">UTR / TXN ID</span>
+                  <span className="font-mono text-slate-800 dark:text-slate-200 font-bold">{p.transactionId}</span>
+                </div>
+                <div className="flex justify-between border-t border-slate-100 dark:border-white/5 pt-1.5 mt-1.5">
+                  <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">Amount Paid</span>
+                  <span className="text-slate-800 dark:text-slate-200 font-bold">
+                    {String(p.planAmount).startsWith("₹") ? p.planAmount : `₹${parseInt(String(p.planAmount)).toLocaleString("en-IN")}`}
+                  </span>
+                </div>
+                <div className="flex justify-between pt-1">
+                  <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">Total Paid So Far</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">₹{totalPaid.toLocaleString("en-IN")}</span>
+                </div>
+                <div className="flex justify-between pt-1">
+                  <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">Remaining Dues</span>
+                  {hasDues ? (
+                    <span className="text-red-500 dark:text-red-400 font-extrabold">{remaining}</span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                      <FaCheckCircle className="text-[9px]" /> Cleared
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-xs pt-1">
+                <span className="text-slate-450 dark:text-slate-500 font-semibold">{p.timestamp}</span>
+                <div className="flex gap-2">
+                  {hasDues && (
+                    <button
+                      onClick={() => onAddPayment({ name: p.name, email: p.email, phone: p.phone, course: p.course })}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 text-xs font-bold rounded-lg transition duration-150 cursor-pointer"
+                    >
+                      <FaPlus className="text-[9px]" /> Update Due
+                    </button>
+                  )}
+                  <button
+                    onClick={() => onDeletePayment((p as any)._id || (p as any).id)}
+                    className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center"
+                    title="Delete Payment"
+                  >
+                    <FaTrash className="text-xs" />
+                  </button>
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+        {filtered.length === 0 && (
+          <div className="bg-white dark:bg-[#0e1726]/80 p-8 text-center text-slate-400 dark:text-slate-500 rounded-3xl border border-slate-100 dark:border-white/5 font-semibold text-sm">
+            No payment records found.
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <Card className="hidden lg:block overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[1000px]">
             <thead>
@@ -2070,7 +2447,7 @@ const PaymentsTab = ({
                 
                 const totalPaid = payments
                   .filter(x => x.email.toLowerCase() === p.email.toLowerCase())
-                  .reduce((acc, x) => acc + parseInt(String(x.planAmount).replace(/[₹,]/g, "") || "0"), 0);
+                  .reduce((acc, x) => acc + parseInt(String(p.planAmount).replace(/[₹,]/g, "") || "0"), 0);
                 return (
                   <tr key={i} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/5 transition">
                     <td className="px-5 py-4 font-bold text-slate-900 dark:text-white text-sm">{p.name}</td>
@@ -2122,7 +2499,11 @@ const PaymentsTab = ({
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={userRole === "admin" ? 9 : 8} className="px-5 py-8 text-center text-slate-400 dark:text-slate-500 text-sm font-semibold">No payment records found.</td></tr>
+                <tr>
+                  <td colSpan={9} className="px-5 py-8 text-center text-slate-400 dark:text-slate-555 text-sm font-semibold">
+                    No payment records found.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
@@ -2159,7 +2540,7 @@ const DashboardTab = ({ registrations, payments }: { registrations: Registration
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 font-medium">Quick summary of all students, payments and referral activity.</p>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-5 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5 mb-8">
         <Card className="hover:scale-[1.02] transition-transform duration-200"><StatCard label="Total Registrations" value={registrations.length} icon={<FaUsers className="text-blue-600 dark:text-blue-400 text-lg" />} iconBgClass="bg-blue-50 dark:bg-blue-500/10" /></Card>
         <Card className="hover:scale-[1.02] transition-transform duration-200"><StatCard label="Payments Received" value={payments.length} icon={<FaMoneyBillWave className="text-green-600 dark:text-green-400 text-lg" />} iconBgClass="bg-green-50 dark:bg-green-500/10" /></Card>
         <Card className="hover:scale-[1.02] transition-transform duration-200"><StatCard label="Active Ref Codes" value={activeCodes} icon={<FaTags className="text-indigo-600 dark:text-indigo-400 text-lg" />} iconBgClass="bg-indigo-50 dark:bg-indigo-500/10" /></Card>
@@ -2176,12 +2557,12 @@ const DashboardTab = ({ registrations, payments }: { registrations: Registration
           </div>
           <div className="divide-y divide-slate-100 dark:divide-white/5">
             {registrations.slice(0, 3).map((r, i) => (
-              <div key={i} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50/50 dark:hover:bg-white/5 transition">
+              <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 hover:bg-slate-50/50 dark:hover:bg-white/5 transition gap-2">
                 <div>
                   <p className="font-bold text-slate-900 dark:text-white text-sm">{r.name}</p>
                   <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">{r.email} · {r.course}</p>
                 </div>
-                <span className="text-xs bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 px-2.5 py-1 rounded-full font-bold">{r.city}</span>
+                <span className="text-xs bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 px-2.5 py-1 rounded-full font-bold self-start sm:self-center">{r.city}</span>
               </div>
             ))}
           </div>
@@ -2195,12 +2576,12 @@ const DashboardTab = ({ registrations, payments }: { registrations: Registration
           </div>
           <div className="divide-y divide-slate-100 dark:divide-white/5">
             {payments.slice(0, 3).map((p, i) => (
-              <div key={i} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50/50 dark:hover:bg-white/5 transition">
+              <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 hover:bg-slate-50/50 dark:hover:bg-white/5 transition gap-2">
                 <div>
                   <p className="font-bold text-slate-900 dark:text-white text-sm">{p.name}</p>
                   <p className="text-slate-500 dark:text-slate-400 text-xs mt-1 font-mono">{p.transactionId}</p>
                 </div>
-                <span className="font-extrabold text-indigo-600 dark:text-indigo-400 text-sm">{p.planAmount}</span>
+                <span className="font-extrabold text-indigo-600 dark:text-indigo-400 text-sm self-start sm:self-center">{p.planAmount}</span>
               </div>
             ))}
           </div>
@@ -2734,17 +3115,17 @@ const AdminPanel = () => {
               </button>
             </div>
 
-            {/* Body */}
+             {/* Body */}
             <form onSubmit={handleDueSubmit} className="p-6 space-y-4">
               {/* Read-only student info */}
               <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl px-5 py-4 space-y-1.5">
                 <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Student Info</p>
                 <p className="font-bold text-slate-900 dark:text-white text-sm">{dueForm.name}</p>
-                <p className="text-slate-500 dark:text-slate-400 text-xs">{dueForm.email} &nbsp;·&nbsp; {dueForm.phone}</p>
-                <p className="text-slate-500 dark:text-slate-400 text-xs">{dueForm.course}</p>
+                <p className="text-slate-550 dark:text-slate-400 text-xs">{dueForm.email} &nbsp;·&nbsp; {dueForm.phone}</p>
+                <p className="text-slate-550 dark:text-slate-400 text-xs">{dueForm.course}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Payment Type *</label>
                   <select value={dueForm.planTitle} onChange={e => {
@@ -2793,7 +3174,7 @@ const AdminPanel = () => {
             
             {/* Modal Body */}
             <form onSubmit={handleModalSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Student Name *</label>
                   <input type="text" required value={modalForm.name} onChange={e => setModalForm({...modalForm, name: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-indigo-500" placeholder="e.g. John Doe" />
@@ -2804,7 +3185,7 @@ const AdminPanel = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Phone Number *</label>
                   <input type="tel" required value={modalForm.phone} onChange={e => setModalForm({...modalForm, phone: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-indigo-500" placeholder="e.g. 9876543210" />
@@ -2820,7 +3201,7 @@ const AdminPanel = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">College / University</label>
                   <input type="text" value={modalForm.college} onChange={e => setModalForm({...modalForm, college: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-indigo-500" placeholder="e.g. RGPV" />
@@ -2839,7 +3220,7 @@ const AdminPanel = () => {
               <div className="border-t border-slate-100 dark:border-white/5 my-4 pt-4">
                 <h4 className="font-bold text-slate-800 dark:text-white text-sm mb-3">Payment Information</h4>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Payment Status *</label>
                     <select value={modalForm.payStatus} onChange={e => {

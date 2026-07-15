@@ -64,24 +64,21 @@ function Payment() {
     {
       id: "one-time",
       title: discountAppliedState ? "MERN Stack - One-Time (10% Code Applied)" : "MERN Stack - One-Time Payment",
-      price: discountAppliedState ? "₹5,400" : "₹6,000",
-      total: discountAppliedState ? "₹5,400" : "₹6,000",
+      basePrice: discountAppliedState ? 5400 : 6000,
       description: discountAppliedState ? "Special discounted price (10% OFF applied)" : "Pay full course fee once and save ₹400",
       tag: discountAppliedState ? "Promo Applied" : "Best Value"
     },
     {
       id: "inst-1",
       title: discountAppliedState ? "MERN Stack - 1st Installment (10% OFF)" : "MERN Stack - 1st Installment",
-      price: discountAppliedState ? "₹2,880" : "₹3,200",
-      total: discountAppliedState ? "₹2,880" : "₹3,200",
+      basePrice: discountAppliedState ? 2880 : 3200,
       description: discountAppliedState ? "First installment (10% OFF applied)" : "First installment to start the course",
       tag: "Flexible"
     },
     {
       id: "inst-2",
       title: discountAppliedState ? "MERN Stack - 2nd Installment (10% OFF)" : "MERN Stack - 2nd Installment",
-      price: discountAppliedState ? "₹2,880" : "₹3,200",
-      total: discountAppliedState ? "₹2,880" : "₹3,200",
+      basePrice: discountAppliedState ? 2880 : 3200,
       description: discountAppliedState ? "Second installment (10% OFF applied)" : "Second installment during the course",
       tag: "Flexible"
     }
@@ -89,6 +86,12 @@ function Payment() {
 
   const [selectedPlanId, setSelectedPlanId] = useState(preSelectedPlanId);
   const selectedPlan = paymentPlans.find((p) => p.id === selectedPlanId) || paymentPlans[0];
+  const gstAmount = Math.round(selectedPlan.basePrice * 0.18);
+  const totalAmount = selectedPlan.basePrice + gstAmount;
+
+  const basePriceStr = `₹${selectedPlan.basePrice.toLocaleString("en-IN")}`;
+  const gstAmountStr = `₹${gstAmount.toLocaleString("en-IN")}`;
+  const totalAmountStr = `₹${totalAmount.toLocaleString("en-IN")}`;
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [receiptData, setReceiptData] = useState<any>(null);
@@ -169,7 +172,7 @@ function Payment() {
             transactionId: formData.transactionId,
             course: formData.course,
             planTitle: selectedPlan.title,
-            planAmount: selectedPlan.total,
+            planAmount: totalAmountStr,
             referralCode: finalRefCode
           }),
         });
@@ -208,7 +211,7 @@ function Payment() {
             transactionId: formData.transactionId,
             course: formData.course,
             planTitle: selectedPlan.title,
-            planAmount: selectedPlan.total,
+            planAmount: totalAmountStr,
             timestamp,
             referralCode: finalRefCode
           };
@@ -241,7 +244,7 @@ function Payment() {
         course: formData.course,
         transactionId: formData.transactionId,
         planTitle: selectedPlan.title,
-        total: selectedPlan.total
+        total: totalAmountStr
       });
 
       // Form Clear
@@ -338,11 +341,21 @@ function Payment() {
               <h3 className="text-lg font-black text-slate-950 mb-1.5 leading-snug">{selectedPlan.title}</h3>
               <p className="text-xs text-slate-600 mb-6 font-bold leading-relaxed">{selectedPlan.description}</p>
               
-              <div className="flex items-baseline justify-between border-t border-slate-200 pt-4">
-                <span className="text-xs text-slate-700 uppercase tracking-widest font-black">Total Payable:</span>
-                <span className="text-2xl font-black text-[#ff5500] tracking-tight">
-                  {selectedPlan.total}
-                </span>
+              <div className="space-y-2.5 border-t border-slate-200 pt-4">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-600 font-bold">Course Fee (Base Price):</span>
+                  <span className="text-slate-800 font-extrabold">{basePriceStr}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-600 font-bold">GST (18%):</span>
+                  <span className="text-slate-800 font-extrabold">{gstAmountStr}</span>
+                </div>
+                <div className="flex items-baseline justify-between border-t border-dashed border-slate-200 pt-2.5">
+                  <span className="text-xs text-slate-700 uppercase tracking-widest font-black">Total Payable:</span>
+                  <span className="text-2xl font-black text-[#ff5500] tracking-tight">
+                    {totalAmountStr}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -660,14 +673,18 @@ function Payment() {
 
               {/* Financials Box */}
               <div className="bg-emerald-50/50 rounded-2xl p-4 mt-4 border border-emerald-100/50">
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-slate-650 font-bold text-xs">Course Fee (Base Price)</span>
+                  <span className="font-bold text-slate-800 text-xs">{basePriceStr}</span>
+                </div>
+
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-slate-600 font-bold text-xs">Total Course Fee</span>
-                  <span className="font-bold text-slate-700 text-xs line-through text-slate-400 mr-2">₹15,000</span>
-                  <span className="font-black text-slate-800 text-sm">{discountAppliedState ? "₹5,400" : "₹6,000"}</span>
+                  <span className="text-slate-650 font-bold text-xs">GST (18%)</span>
+                  <span className="font-bold text-slate-800 text-xs">{gstAmountStr}</span>
                 </div>
                 
                 <div className="flex justify-between items-center mb-3 pb-3 border-b border-emerald-200/50">
-                  <span className="text-emerald-700 font-black text-sm uppercase tracking-wide">Amount Paid</span>
+                  <span className="text-emerald-700 font-black text-sm uppercase tracking-wide">Amount Paid (Total)</span>
                   <span className="font-black text-emerald-600 text-xl">{receiptData?.total}</span>
                 </div>
 
@@ -675,9 +692,10 @@ function Payment() {
                   <span className="text-slate-500 font-bold text-xs">Remaining Dues</span>
                   <span className="font-black text-red-500 text-sm">
                     {(() => {
-                      const total = discountAppliedState ? 5400 : 6000;
+                      const totalCourseBase = discountAppliedState ? 5400 : 6000;
+                      const totalCourseWithGST = Math.round(totalCourseBase * 1.18);
                       const paid = parseInt((receiptData?.total || "0").replace(/[^0-9]/g, "")) || 0;
-                      const due = total - paid;
+                      const due = totalCourseWithGST - paid;
                       return due > 0 ? `₹${due.toLocaleString("en-IN")}` : "₹0 (Cleared)";
                     })()}
                   </span>
