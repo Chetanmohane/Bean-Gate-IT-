@@ -2230,6 +2230,19 @@ const AdminPanel = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
 
   const fetchRegistrationsAndPayments = async () => {
+    // Sync referral codes from database first so sub-admin filtering works properly
+    try {
+      const codeRes = await fetch("/api/refcodes");
+      if (codeRes.ok) {
+        const codeData = await codeRes.json();
+        if (Array.isArray(codeData)) {
+          localStorage.setItem("bg_ref_codes", JSON.stringify(codeData));
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to sync referral codes from server:", e);
+    }
+
     try {
       const regRes = await fetch("/api/registrations");
       if (!regRes.ok) throw new Error("Registrations API returned " + regRes.status);
