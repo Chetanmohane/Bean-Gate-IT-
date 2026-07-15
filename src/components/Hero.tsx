@@ -103,25 +103,25 @@ const Hero = () => {
             <div className="grid grid-cols-2 gap-5 relative z-10 w-full max-w-[340px]">
               
               {/* React Card */}
-              <div className="bg-[#0b1329]/50 backdrop-blur-md border border-sky-500/15 p-5 rounded-2xl flex flex-col items-center justify-center hover:border-sky-500/40 hover:shadow-[0_0_25px_rgba(14,165,233,0.15)] transition duration-500 animate-bounce" style={{ animationDuration: "6s" }}>
+              <div className="bg-[#0b1329]/95 border border-sky-500/15 p-5 rounded-2xl flex flex-col items-center justify-center hover:border-sky-500/40 hover:shadow-[0_0_25px_rgba(14,165,233,0.15)] transition duration-500 animate-bounce" style={{ animationDuration: "6s" }}>
                 <FaReact className="text-4xl text-sky-400 animate-spin" style={{ animationDuration: "12s" }} />
                 <span className="block mt-2.5 text-[10px] font-black tracking-widest text-sky-400 uppercase">React.js</span>
               </div>
 
               {/* Node Card */}
-              <div className="bg-[#0b1329]/50 backdrop-blur-md border border-green-500/15 p-5 rounded-2xl flex flex-col items-center justify-center hover:border-green-500/40 hover:shadow-[0_0_25px_rgba(34,197,94,0.15)] transition duration-500 animate-bounce" style={{ animationDuration: "7s", animationDelay: "1s" }}>
+              <div className="bg-[#0b1329]/95 border border-green-500/15 p-5 rounded-2xl flex flex-col items-center justify-center hover:border-green-500/40 hover:shadow-[0_0_25px_rgba(34,197,94,0.15)] transition duration-500 animate-bounce" style={{ animationDuration: "7s", animationDelay: "1s" }}>
                 <FaNodeJs className="text-4xl text-green-400" />
                 <span className="block mt-2.5 text-[10px] font-black tracking-widest text-green-400 uppercase">Node.js</span>
               </div>
 
               {/* Express Card */}
-              <div className="bg-[#0b1329]/50 backdrop-blur-md border border-white/10 p-5 rounded-2xl flex flex-col items-center justify-center hover:border-white/30 hover:shadow-[0_0_25px_rgba(255,255,255,0.08)] transition duration-500 animate-bounce" style={{ animationDuration: "5s", animationDelay: "2s" }}>
+              <div className="bg-[#0b1329]/95 border border-white/10 p-5 rounded-2xl flex flex-col items-center justify-center hover:border-white/30 hover:shadow-[0_0_25px_rgba(255,255,255,0.08)] transition duration-500 animate-bounce" style={{ animationDuration: "5s", animationDelay: "2s" }}>
                 <SiExpress className="text-4xl text-gray-200" />
                 <span className="block mt-2.5 text-[10px] font-black tracking-widest text-gray-200 uppercase">Express.js</span>
               </div>
 
               {/* MongoDB Card */}
-              <div className="bg-[#0b1329]/50 backdrop-blur-md border border-emerald-500/15 p-5 rounded-2xl flex flex-col items-center justify-center hover:border-emerald-500/40 hover:shadow-[0_0_25px_rgba(16,185,129,0.15)] transition duration-500 animate-bounce" style={{ animationDuration: "8s", animationDelay: "0.5s" }}>
+              <div className="bg-[#0b1329]/95 border border-emerald-500/15 p-5 rounded-2xl flex flex-col items-center justify-center hover:border-emerald-500/40 hover:shadow-[0_0_25px_rgba(16,185,129,0.15)] transition duration-500 animate-bounce" style={{ animationDuration: "8s", animationDelay: "0.5s" }}>
                 <SiMongodb className="text-4xl text-emerald-400" />
                 <span className="block mt-2.5 text-[10px] font-black tracking-widest text-emerald-400 uppercase">MongoDB</span>
               </div>
