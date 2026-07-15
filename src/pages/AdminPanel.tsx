@@ -1577,68 +1577,15 @@ const RegistrationsTab = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">College</label>
-                <input
-                  type="text"
-                  value={editingStudent.college}
-                  onChange={(e) => setEditingStudent({ ...editingStudent, college: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-indigo-500 transition"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">City</label>
-                <input
-                  type="text"
-                  value={editingStudent.city}
-                  onChange={(e) => setEditingStudent({ ...editingStudent, city: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-indigo-500 transition"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Referral Code</label>
-                <input
-                  type="text"
-                  value={editingStudent.referralCode || ""}
-                  onChange={(e) => setEditingStudent({ ...editingStudent, referralCode: e.target.value.toUpperCase() })}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-indigo-500 transition"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-white/5">
-                <button
-                  type="button"
-                  onClick={() => setEditingStudent(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition cursor-pointer border-none"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white text-xs font-bold rounded-xl transition cursor-pointer border-none shadow-sm"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════
-// PAYMENTS TAB
-// ═══════════════════════════════════════════════════════════════════════
 const PaymentsTab = ({
   payments,
   onAddPayment,
+  onDeletePayment,
   userRole
 }: {
   payments: Payment[];
   onAddPayment: (student: { name: string; email: string; phone: string; course: string }) => void;
+  onDeletePayment: (id: string) => void;
   userRole: "admin" | "subadmin";
 }) => {
   const [search, setSearch] = useState("");
@@ -1646,7 +1593,6 @@ const PaymentsTab = ({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Show all individual payment transactions (no deduplication so all UTRs are visible)
   const filtered = payments.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
                           p.email.toLowerCase().includes(search.toLowerCase()) ||
@@ -1662,7 +1608,7 @@ const PaymentsTab = ({
     }
 
     if (p.timestamp) {
-      const pDateStr = p.timestamp.split(" ")[0]; // Get YYYY-MM-DD
+      const pDateStr = p.timestamp.split(" ")[0];
       const pDate = new Date(pDateStr);
       if (startDate) {
         const sDate = new Date(startDate);
@@ -1676,6 +1622,31 @@ const PaymentsTab = ({
     
     return true;
   });
+
+  const totalTransactions = filtered.length;
+  const totalCollected = filtered.reduce((acc, p) => acc + parseInt(String(p.planAmount).replace(/[₹,]/g, "") || "0"), 0);
+  
+  const uniqueEmails = Array.from(new Set(filtered.map(x => x.email.toLowerCase())));
+  const totalDues = uniqueEmails.reduce((acc, email) => {
+    const matched = filtered.find(x => x.email.toLowerCase() === email);
+    if (!matched) return acc;
+    const remaining = getRemainingBalance(matched.email, matched.phone, payments).replace(/[₹,]/g, "");
+    return acc + parseInt(remaining || "0");
+  }, 0);
+
+  const getPlanBadgeClass = (plan: string) => {
+    const p = plan.toLowerCase();
+    if (p.includes("one-time") || p.includes("full")) {
+      return "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20";
+    }
+    if (p.includes("1st") || p.includes("first")) {
+      return "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20";
+    }
+    if (p.includes("2nd") || p.includes("second") || p.includes("final")) {
+      return "bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400 border border-violet-100 dark:border-violet-500/20";
+    }
+    return "bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-100 dark:border-white/10";
+  };
 
   const handleDownloadCSV = () => {
     if (filtered.length === 0) {
@@ -1714,13 +1685,45 @@ const PaymentsTab = ({
   };
 
   return (
-    <div>
-      <h2 className="text-xl font-extrabold text-slate-900 dark:text-white mb-1">Payment Records</h2>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 font-medium">All student payments. Use <span className="text-indigo-500 font-bold">Update Due</span> to record remaining installment payments.</p>
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h2 className="text-xl font-extrabold text-slate-900 dark:text-white mb-1">Payment Records</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">All student payments. Use <span className="text-indigo-500 font-bold">Update Due</span> to record remaining installment payments.</p>
+      </div>
 
-      {/* Search and Filters */}
-      {/* Search and Filters */}
-      <div className="flex flex-col gap-4 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div className="bg-white dark:bg-[#0e1726]/40 backdrop-blur-md border border-slate-100 dark:border-white/5 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:scale-[1.02] transition duration-200">
+          <div>
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Transactions</p>
+            <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{totalTransactions}</h3>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center border border-blue-100/30 dark:border-blue-500/15">
+            <FaMoneyBillWave className="text-blue-500 text-lg" />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#0e1726]/40 backdrop-blur-md border border-slate-100 dark:border-white/5 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:scale-[1.02] transition duration-200">
+          <div>
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Total Collected</p>
+            <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">₹{totalCollected.toLocaleString("en-IN")}</h3>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center border border-emerald-100/30 dark:border-emerald-500/15">
+            <FaCheckCircle className="text-emerald-500 text-lg" />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#0e1726]/40 backdrop-blur-md border border-slate-100 dark:border-white/5 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:scale-[1.02] transition duration-200">
+          <div>
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Outstanding Dues</p>
+            <h3 className="text-2xl font-black text-rose-500 dark:text-rose-400 tracking-tight">₹{totalDues.toLocaleString("en-IN")}</h3>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center border border-rose-100/30 dark:border-rose-500/15">
+            <FaMoneyBillWave className="text-rose-500 text-lg" />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4">
         <div className="flex flex-col xl:flex-row gap-4 w-full">
           <div className="relative flex-1">
             <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm" />
@@ -1731,11 +1734,8 @@ const PaymentsTab = ({
           
           <div className="flex flex-wrap gap-4">
             <div className="w-full sm:w-48">
-              <select 
-                value={filterStatus} 
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full px-4 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200 appearance-none"
-              >
+              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full px-3 py-2.5 bg-white border border-slate-200 dark:bg-[#1a233a] dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 cursor-pointer">
                 <option value="All">All Status</option>
                 <option value="Cleared">Cleared</option>
                 <option value="Has Dues">Has Dues</option>
@@ -1743,25 +1743,15 @@ const PaymentsTab = ({
             </div>
             
             <div className="flex items-center gap-2">
-              <input 
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full sm:w-36 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200"
-              />
-              <span className="text-slate-400 text-sm">to</span>
-              <input 
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full sm:w-36 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200"
-              />
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+                className="px-3 py-2 bg-white border border-slate-200 dark:bg-[#1a233a] dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-xs outline-none focus:border-indigo-500 cursor-pointer" />
+              <span className="text-slate-400 text-xs">to</span>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
+                className="px-3 py-2 bg-white border border-slate-200 dark:bg-[#1a233a] dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-xs outline-none focus:border-indigo-500 cursor-pointer" />
             </div>
-            
-            <button 
-              onClick={handleDownloadCSV}
-              className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold rounded-xl transition duration-200 cursor-pointer border-none shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto"
-            >
+
+            <button onClick={handleDownloadCSV}
+              className="px-5 py-2.5 bg-[#0e1726] hover:bg-[#1b253b] text-white text-xs font-extrabold rounded-xl transition duration-150 flex items-center gap-1.5 cursor-pointer border-none shadow-md">
               Export CSV
             </button>
           </div>
@@ -1773,17 +1763,16 @@ const PaymentsTab = ({
           <table className="w-full text-sm min-w-[1000px]">
             <thead>
               <tr className="bg-slate-50/80 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
-                {["Name", "Email", "UTR / TXN ID", "Plan / Option", "Paid Amount", "Total Paid", "Remaining Dues", "Time"].map(h => (
+                {["Name", "Email", "UTR / TXN ID", "Plan / Option", "Paid Amount", "Total Paid", "Remaining Dues", "Time", "Action"].map(h => (
                   <th key={h} className="text-left px-5 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{h}</th>
                 ))}
-                <th className="text-left px-5 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Action</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((p, i) => {
                 const remaining = getRemainingBalance(p.email, p.phone, payments);
                 const hasDues = remaining !== "₹0";
-                // Sum all payments for this student
+                
                 const totalPaid = payments
                   .filter(x => x.email.toLowerCase() === p.email.toLowerCase())
                   .reduce((acc, x) => acc + parseInt(String(x.planAmount).replace(/[₹,]/g, "") || "0"), 0);
@@ -1791,9 +1780,15 @@ const PaymentsTab = ({
                   <tr key={i} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/5 transition">
                     <td className="px-5 py-4 font-bold text-slate-900 dark:text-white text-sm">{p.name}</td>
                     <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm">{p.email}</td>
-                    <td className="px-5 py-4 font-mono text-slate-700 dark:text-slate-200 text-xs font-bold tracking-wider">{p.transactionId}</td>
                     <td className="px-5 py-4">
-                      <span className="bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400 text-xs font-bold px-2.5 py-1 rounded-full border border-violet-100 dark:border-violet-500/20">{p.planTitle}</span>
+                      <span className="font-mono bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 text-xs font-bold tracking-wider">
+                        {p.transactionId}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className={`text-[10px] font-black tracking-wider px-2.5 py-1.5 rounded-full uppercase ${getPlanBadgeClass(p.planTitle)}`}>
+                        {p.planTitle}
+                      </span>
                     </td>
                     <td className="px-5 py-4 font-bold text-slate-700 dark:text-slate-300 text-sm">
                       {String(p.planAmount).startsWith("₹") ? p.planAmount : `₹${parseInt(String(p.planAmount)).toLocaleString("en-IN")}`}
@@ -1801,7 +1796,9 @@ const PaymentsTab = ({
                     <td className="px-5 py-4 font-extrabold text-emerald-600 dark:text-emerald-400 text-sm">₹{totalPaid.toLocaleString("en-IN")}</td>
                     <td className="px-5 py-4">
                       {hasDues ? (
-                        <span className="font-extrabold text-red-500 dark:text-red-400 text-sm">{remaining}</span>
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-500/20 text-xs font-extrabold shadow-sm">
+                          {remaining} Dues
+                        </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 px-2.5 py-1 rounded-full">
                           <FaCheckCircle className="text-[10px]" /> Cleared
@@ -1814,17 +1811,17 @@ const PaymentsTab = ({
                         {hasDues && (
                           <button
                             onClick={() => onAddPayment({ name: p.name, email: p.email, phone: p.phone, course: p.course })}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 text-xs font-bold rounded-lg transition duration-150 cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 text-xs font-bold rounded-lg transition duration-150 cursor-pointer"
                           >
                             <FaPlus className="text-[10px]" /> Update Due
                           </button>
                         )}
                         <button
                           onClick={() => onDeletePayment((p as any)._id || (p as any).id)}
-                          className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center"
+                          className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center hover:scale-105 active:scale-95 shadow-sm"
                           title="Delete Payment"
                         >
-                          <FaTrash className="text-sm" />
+                          <FaTrash className="text-xs" />
                         </button>
                       </div>
                     </td>
@@ -1832,7 +1829,7 @@ const PaymentsTab = ({
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={userRole === "admin" ? 9 : 8} className="px-5 py-8 text-center text-slate-400 dark:text-slate-500 text-sm font-semibold">No payment records found.</td></tr>
+                <tr><td colSpan={9} className="px-5 py-8 text-center text-slate-400 dark:text-slate-500 text-sm font-semibold">No payment records found.</td></tr>
               )}
             </tbody>
           </table>
