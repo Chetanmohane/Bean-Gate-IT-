@@ -52,8 +52,33 @@ const initializeDBData = async () => {
           "Practical Hands-on Training",
           "100% Placement Assistance",
           "Course Completion Certificate",
-        ]
+        ],
+        courses: ["Frontend Developer", "Backend Developer", "MERN Stack"],
+        colleges: ["PDPS College", "BUIT", "Other"],
+        cities: ["Bhopal", "Indore", "Jabalpur", "Other"]
       });
+    } else {
+      // Check if existing configuration is missing courses, colleges or cities arrays
+      const existing = await PlanConfig.findOne();
+      if (existing) {
+        let updated = false;
+        if (!existing.courses || existing.courses.length === 0) {
+          existing.courses = ["Frontend Developer", "Backend Developer", "MERN Stack"];
+          updated = true;
+        }
+        if (!existing.colleges || existing.colleges.length === 0) {
+          existing.colleges = ["PDPS College", "BUIT", "Other"];
+          updated = true;
+        }
+        if (!existing.cities || existing.cities.length === 0) {
+          existing.cities = ["Bhopal", "Indore", "Jabalpur", "Other"];
+          updated = true;
+        }
+        if (updated) {
+          await existing.save();
+          console.log('Successfully migrated and seeded missing dropdown options on existing DB config.');
+        }
+      }
     }
 
     // Create default ref codes if not exists

@@ -28,6 +28,28 @@ const Offer = ({
   const [status, setStatus] = useState("idle");
   const navigate = useNavigate();
 
+  const [courses, setCourses] = useState<string[]>(["Frontend Developer", "Backend Developer", "MERN Stack"]);
+  const [colleges, setColleges] = useState<string[]>(["PDPS College", "BUIT", "Other"]);
+  const [cities, setCities] = useState<string[]>(["Bhopal", "Indore", "Jabalpur", "Other"]);
+
+  useEffect(() => {
+    fetch("/api/planconfig")
+      .then((res) => {
+        if (!res.ok) throw new Error("API failed");
+        return res.json();
+      })
+      .then((data) => {
+        if (data) {
+          if (Array.isArray(data.courses) && data.courses.length > 0) setCourses(data.courses);
+          if (Array.isArray(data.colleges) && data.colleges.length > 0) setColleges(data.colleges);
+          if (Array.isArray(data.cities) && data.cities.length > 0) setCities(data.cities);
+        }
+      })
+      .catch((err) => {
+        console.warn("Failed to load dynamic dropdown config, using local fallbacks:", err);
+      });
+  }, []);
+
   const [referralCode, setReferralCode] = useState(appliedDiscount ? "BEANGATE10" : "");
   const [promoError, setPromoError] = useState("");
   const [promoSuccess, setPromoSuccess] = useState(appliedDiscount ? "Referral code applied! 10% Discount saved." : "");
@@ -360,9 +382,7 @@ const Offer = ({
                     className={`w-full px-4 py-2 bg-gray-50 border rounded-lg focus:outline-none text-sm text-gray-900 transition-colors ${errors.course ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-gray-200 focus:ring-1 focus:ring-orange-500'}`}
                   >
                     <option value="">Select Course</option>
-                    <option value="Frontend Developer">Frontend Developer</option>
-                    <option value="Backend Developer">Backend Developer</option>
-                    <option value="MERN Stack">MERN Stack</option>
+                    {courses.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
               </div>
@@ -377,9 +397,7 @@ const Offer = ({
                     className={`w-full px-4 py-2 bg-gray-50 border rounded-lg focus:outline-none text-sm text-gray-900 transition-colors ${errors.college ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-gray-200 focus:ring-1 focus:ring-orange-500'}`}
                   >
                     <option value="">Select College</option>
-                    <option value="PDPS College">PDPS College</option>
-                    <option value="BUIT">BUIT</option>
-                    <option value="Other">Other</option>
+                    {colleges.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
@@ -391,10 +409,7 @@ const Offer = ({
                     className={`w-full px-4 py-2 bg-gray-50 border rounded-lg focus:outline-none text-sm text-gray-900 transition-colors ${errors.city ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-gray-200 focus:ring-1 focus:ring-orange-500'}`}
                   >
                     <option value="">Select City</option>
-                    <option value="Bhopal">Bhopal</option>
-                    <option value="Indore">Indore</option>
-                    <option value="Jabalpur">Jabalpur</option>
-                    <option value="Other">Other</option>
+                    {cities.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
               </div>

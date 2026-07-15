@@ -10,6 +10,9 @@ const planConfigSchema = new mongoose.Schema({
   discountPercent: { type: Number, default: 10 },
   oneTimeFeatures: { type: [String], default: [] },
   installmentFeatures: { type: [String], default: [] },
+  courses: { type: [String], default: ["Frontend Developer", "Backend Developer", "MERN Stack"] },
+  colleges: { type: [String], default: ["PDPS College", "BUIT", "Other"] },
+  cities: { type: [String], default: ["Bhopal", "Indore", "Jabalpur", "Other"] },
 });
 
 module.exports = mongoose.model('PlanConfig', planConfigSchema);

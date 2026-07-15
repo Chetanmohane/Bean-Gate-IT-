@@ -29,6 +29,24 @@ const Pricing = ({
   const [promoCode, setPromoCode] = useState("");
   const [promoError, setPromoError] = useState("");
   const [promoSuccess, setPromoSuccess] = useState("");
+  const [pricingCfg, setPricingCfg] = useState<any>(null);
+
+  useEffect(() => {
+    fetch("/api/planconfig")
+      .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then(data => {
+        if (data) {
+          setPricingCfg(data);
+          localStorage.setItem("bg_plan_config", JSON.stringify(data));
+        }
+      })
+      .catch(e => {
+        console.warn("Failed to fetch planconfig in Pricing, using local storage cache:", e);
+      });
+  }, []);
 
   useEffect(() => {
     if (appliedDiscount) {
@@ -89,7 +107,7 @@ const Pricing = ({
   };
 
   // Read admin-configured plan data (falls back to defaults)
-  const adminCfg = getPlanCfg();
+  const adminCfg = pricingCfg || getPlanCfg();
   const oneTimePrice   = adminCfg?.oneTimePrice        ?? 6000;
   const originalPrice  = adminCfg?.oneTimeOriginalPrice ?? 15000;
   const inst1Price     = adminCfg?.installment1Price    ?? 3200;

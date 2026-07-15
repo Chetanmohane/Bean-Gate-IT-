@@ -64,6 +64,9 @@ interface PlanConfig {
   discountPercent: number;
   oneTimeFeatures: string[];
   installmentFeatures: string[];
+  courses?: string[];
+  colleges?: string[];
+  cities?: string[];
 }
 
 const DEFAULT_PLAN_CONFIG: PlanConfig = {
@@ -87,6 +90,9 @@ const DEFAULT_PLAN_CONFIG: PlanConfig = {
     "100% Placement Assistance",
     "Course Completion Certificate",
   ],
+  courses: ["Frontend Developer", "Backend Developer", "MERN Stack"],
+  colleges: ["PDPS College", "BUIT", "Other"],
+  cities: ["Bhopal", "Indore", "Jabalpur", "Other"],
 };
 
 const loadPlanConfig = (): PlanConfig => {
@@ -296,8 +302,21 @@ const StatCard = ({ label, value, icon, iconBgClass }: { label: string; value: s
 // PLANS TAB
 // ═══════════════════════════════════════════════════════════════════════
 const PlansTab = () => {
-  const [cfg, setCfg] = useState<PlanConfig>(loadPlanConfig);
+  const [cfg, setCfg] = useState<PlanConfig>(DEFAULT_PLAN_CONFIG);
   const [saved, setSaved] = useState(false);
+  const [dbId, setDbId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/planconfig")
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          setCfg({ ...DEFAULT_PLAN_CONFIG, ...data });
+          if (data._id) setDbId(data._id);
+        }
+      })
+      .catch(err => console.warn("Failed to load planconfig from DB:", err));
+  }, []);
 
   const update = (key: keyof PlanConfig, value: string | number | string[]) =>
     setCfg(prev => ({ ...prev, [key]: value }));
@@ -314,10 +333,31 @@ const PlansTab = () => {
   const removeFeature = (plan: "oneTimeFeatures" | "installmentFeatures", idx: number) =>
     update(plan, cfg[plan].filter((_, i) => i !== idx));
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    // Save to local storage for backward compatibility / fallback
     savePlanConfig(cfg);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+
+    // Save to database
+    try {
+      const url = dbId ? `/api/planconfig/${dbId}` : "/api/planconfig";
+      const method = dbId ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cfg),
+      });
+      if (res.ok) {
+        const savedData = await res.json();
+        if (savedData._id) setDbId(savedData._id);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+      } else {
+        alert("Failed to save configuration to database.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error saving configuration to backend database.");
+    }
   };
 
   const discountedOneTime = Math.round(cfg.oneTimePrice * (1 - cfg.discountPercent / 100));
@@ -447,6 +487,209 @@ const PlansTab = () => {
           </div>
         </Card>
       </div>
+
+      {/* Dynamic Dropdown Options Management */}
+      <Card className="p-6 mb-6 mt-6">
+        <p className="text-sm font-extrabold text-slate-800 dark:text-white mb-2">Manage Dropdown Selection Lists</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 font-medium font-sans">Add, remove, or edit options shown in the student registration form.</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* 1. Courses Dropdown */}
+          <div className="bg-slate-50 dark:bg-white/5 border border-slate-150 dark:border-white/5 rounded-2xl p-4">
+            <p className="text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest mb-4">Courses Dropdown</p>
+            <div className="space-y-2 mb-4 max-h-60 overflow-y-auto pr-1">
+              {(cfg.courses || []).map((course, idx) => (
+                <div key={idx} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/5 px-3 py-2 rounded-xl">
+                  <input
+                    type="text"
+                    value={course}
+                    onChange={(e) => {
+                      const updated = [...(cfg.courses || [])];
+                      updated[idx] = e.target.value;
+                      update("courses", updated);
+                    }}
+                    className="flex-1 bg-transparent border-none text-xs font-semibold text-slate-800 dark:text-white outline-none focus:ring-0 p-0"
+                  />
+                  <button
+                    onClick={() => {
+                      const updated = (cfg.courses || []).filter((_, i) => i !== idx);
+                      update("courses", updated);
+                    }}
+                    className="p-1 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center shrink-0"
+                    title="Remove"
+                  >
+                    <FaTrash className="text-[10px]" />
+                  </button>
+                </div>
+              ))}
+              {(cfg.courses || []).length === 0 && (
+                <p className="text-slate-400 text-xs italic text-center py-2">No courses added.</p>
+              )}
+            </div>
+            
+            {/* Add New Course */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                id="new-course-input"
+                placeholder="Add new course..."
+                className="flex-1 px-3 py-2 bg-white border border-slate-250 dark:bg-slate-900 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-xs outline-none focus:border-indigo-500"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const input = e.currentTarget;
+                    if (input.value.trim()) {
+                      update("courses", [...(cfg.courses || []), input.value.trim()]);
+                      input.value = "";
+                    }
+                  }
+                }}
+              />
+              <button
+                onClick={() => {
+                  const input = document.getElementById("new-course-input") as HTMLInputElement;
+                  if (input && input.value.trim()) {
+                    update("courses", [...(cfg.courses || []), input.value.trim()]);
+                    input.value = "";
+                  }
+                }}
+                className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl border-none cursor-pointer transition flex items-center justify-center shrink-0"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+
+          {/* 2. Colleges Dropdown */}
+          <div className="bg-slate-50 dark:bg-white/5 border border-slate-150 dark:border-white/5 rounded-2xl p-4">
+            <p className="text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest mb-4">Colleges Dropdown</p>
+            <div className="space-y-2 mb-4 max-h-60 overflow-y-auto pr-1">
+              {(cfg.colleges || []).map((college, idx) => (
+                <div key={idx} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/5 px-3 py-2 rounded-xl">
+                  <input
+                    type="text"
+                    value={college}
+                    onChange={(e) => {
+                      const updated = [...(cfg.colleges || [])];
+                      updated[idx] = e.target.value;
+                      update("colleges", updated);
+                    }}
+                    className="flex-1 bg-transparent border-none text-xs font-semibold text-slate-800 dark:text-white outline-none focus:ring-0 p-0"
+                  />
+                  <button
+                    onClick={() => {
+                      const updated = (cfg.colleges || []).filter((_, i) => i !== idx);
+                      update("colleges", updated);
+                    }}
+                    className="p-1 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center shrink-0"
+                    title="Remove"
+                  >
+                    <FaTrash className="text-[10px]" />
+                  </button>
+                </div>
+              ))}
+              {(cfg.colleges || []).length === 0 && (
+                <p className="text-slate-400 text-xs italic text-center py-2">No colleges added.</p>
+              )}
+            </div>
+            
+            {/* Add New College */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                id="new-college-input"
+                placeholder="Add new college..."
+                className="flex-1 px-3 py-2 bg-white border border-slate-250 dark:bg-slate-900 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-xs outline-none focus:border-indigo-500"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const input = e.currentTarget;
+                    if (input.value.trim()) {
+                      update("colleges", [...(cfg.colleges || []), input.value.trim()]);
+                      input.value = "";
+                    }
+                  }
+                }}
+              />
+              <button
+                onClick={() => {
+                  const input = document.getElementById("new-college-input") as HTMLInputElement;
+                  if (input && input.value.trim()) {
+                    update("colleges", [...(cfg.colleges || []), input.value.trim()]);
+                    input.value = "";
+                  }
+                }}
+                className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl border-none cursor-pointer transition flex items-center justify-center shrink-0"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+
+          {/* 3. Cities Dropdown */}
+          <div className="bg-slate-50 dark:bg-white/5 border border-slate-150 dark:border-white/5 rounded-2xl p-4">
+            <p className="text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest mb-4">Cities Dropdown</p>
+            <div className="space-y-2 mb-4 max-h-60 overflow-y-auto pr-1">
+              {(cfg.cities || []).map((city, idx) => (
+                <div key={idx} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/5 px-3 py-2 rounded-xl">
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => {
+                      const updated = [...(cfg.cities || [])];
+                      updated[idx] = e.target.value;
+                      update("cities", updated);
+                    }}
+                    className="flex-1 bg-transparent border-none text-xs font-semibold text-slate-800 dark:text-white outline-none focus:ring-0 p-0"
+                  />
+                  <button
+                    onClick={() => {
+                      const updated = (cfg.cities || []).filter((_, i) => i !== idx);
+                      update("cities", updated);
+                    }}
+                    className="p-1 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center shrink-0"
+                    title="Remove"
+                  >
+                    <FaTrash className="text-[10px]" />
+                  </button>
+                </div>
+              ))}
+              {(cfg.cities || []).length === 0 && (
+                <p className="text-slate-400 text-xs italic text-center py-2">No cities added.</p>
+              )}
+            </div>
+            
+            {/* Add New City */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                id="new-city-input"
+                placeholder="Add new city..."
+                className="flex-1 px-3 py-2 bg-white border border-slate-250 dark:bg-slate-900 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-xs outline-none focus:border-indigo-500"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const input = e.currentTarget;
+                    if (input.value.trim()) {
+                      update("cities", [...(cfg.cities || []), input.value.trim()]);
+                      input.value = "";
+                    }
+                  }
+                }}
+              />
+              <button
+                onClick={() => {
+                  const input = document.getElementById("new-city-input") as HTMLInputElement;
+                  if (input && input.value.trim()) {
+                    update("cities", [...(cfg.cities || []), input.value.trim()]);
+                    input.value = "";
+                  }
+                }}
+                className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl border-none cursor-pointer transition flex items-center justify-center shrink-0"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* Preview bar */}
       <Card className="mt-6 px-6 py-4">
