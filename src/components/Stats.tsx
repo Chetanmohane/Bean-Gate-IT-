@@ -11,12 +11,28 @@ const Stats = () => {
     { icon: <FaStar className="text-2xl text-[#1a66ff]" />, number: "4.9/5", label: "Student Rating" },
   ];
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+  };
+
   return (
     <section className="relative z-20 -mt-10 sm:-mt-14 px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto">
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
         className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-6 md:p-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-9 gap-6 items-center border border-slate-100"
       >
         {stats.map((stat, index) => {
@@ -25,7 +41,7 @@ const Stats = () => {
           return (
             <React.Fragment key={index}>
               {/* Stat Column */}
-              <div className="flex items-center gap-4 lg:col-span-1 justify-center sm:justify-start lg:justify-center">
+              <motion.div variants={itemVariants} className="flex items-center gap-4 lg:col-span-1 justify-center sm:justify-start lg:justify-center">
                 {/* Soft Blue Circle Background for Icons */}
                 <div className="w-14 h-14 rounded-full bg-[#e6f0ff] flex items-center justify-center shrink-0">
                   {stat.icon}
@@ -40,11 +56,11 @@ const Stats = () => {
                     {stat.label}
                   </p>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Elegant Vertical Divider for Large screens */}
               {!isLast && (
-                <div className="hidden lg:block h-10 w-[1px] bg-slate-200/80 mx-auto col-span-1"></div>
+                <motion.div variants={itemVariants} className="hidden lg:block h-10 w-[1px] bg-slate-200/80 mx-auto col-span-1"></motion.div>
               )}
             </React.Fragment>
           );

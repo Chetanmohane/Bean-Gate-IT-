@@ -38,6 +38,21 @@ const Projects = () => {
     { title: "Full Stack MERN Project", icon: <FaDatabase className="text-[#22c55e] text-3xl mb-3" /> },
   ];
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, scale: 0.9, y: 15 },
+    visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+  };
+
   return (
     <section className="py-20 bg-white overflow-hidden border-t border-gray-100">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -49,9 +64,15 @@ const Projects = () => {
               Course Roadmap
             </h2>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8">
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8"
+            >
               {steps.map((step, index) => (
-                <div key={index} className="flex flex-col items-center">
+                <motion.div variants={itemVariants} key={index} className="flex flex-col items-center">
                   
                   {/* Step Card Circle */}
                   <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full shadow-lg border border-gray-150 flex items-center justify-center relative hover:scale-105 transition-transform duration-300">
@@ -68,9 +89,9 @@ const Projects = () => {
                     {step.title}
                   </h3>
 
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
 
           {/* ================= Right: Projects You Will Build ================= */}
@@ -79,10 +100,17 @@ const Projects = () => {
               Projects You Will Build
             </h2>
 
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            >
               {projects.map((project, index) => (
                 <motion.div
                   key={index}
+                  variants={itemVariants}
                   whileHover={{ y: -4 }}
                   className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100/90 p-5 flex flex-col items-center justify-center text-center hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] transition-all duration-300 min-h-[140px]"
                 >
@@ -93,7 +121,7 @@ const Projects = () => {
                   </h3>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
 
         </div>
