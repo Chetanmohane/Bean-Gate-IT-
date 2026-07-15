@@ -1776,9 +1776,7 @@ const PaymentsTab = ({
                 {["Name", "Email", "UTR / TXN ID", "Plan / Option", "Paid Amount", "Total Paid", "Remaining Dues", "Time"].map(h => (
                   <th key={h} className="text-left px-5 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{h}</th>
                 ))}
-                {userRole === "admin" && (
-                  <th className="text-left px-5 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Action</th>
-                )}
+                <th className="text-left px-5 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -1811,20 +1809,25 @@ const PaymentsTab = ({
                       )}
                     </td>
                     <td className="px-5 py-4 text-slate-400 dark:text-slate-500 text-xs font-semibold">{p.timestamp}</td>
-                    {userRole === "admin" && (
-                      <td className="px-5 py-4">
-                        {hasDues ? (
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-2">
+                        {hasDues && (
                           <button
                             onClick={() => onAddPayment({ name: p.name, email: p.email, phone: p.phone, course: p.course })}
                             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 text-xs font-bold rounded-lg transition duration-150 cursor-pointer"
                           >
                             <FaPlus className="text-[10px]" /> Update Due
                           </button>
-                        ) : (
-                          <span className="text-slate-300 dark:text-slate-600 text-xs font-semibold">—</span>
                         )}
-                      </td>
-                    )}
+                        <button
+                          onClick={() => onDeletePayment((p as any)._id || (p as any).id)}
+                          className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center"
+                          title="Delete Payment"
+                        >
+                          <FaTrash className="text-sm" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
