@@ -23,52 +23,81 @@ app.use((req, res, next) => {
   next();
 });
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGO_URI || 'mongodb+srv://bhumigarg2727_db_user:DwEKJWovWB214zsH@cluster0.vh71iko.mongodb.net/?appName=Cluster0', {})
-.then(async () => {
-  console.log('Successfully connected to MongoDB Atlas');
-  
-  // Create default plan config if not exists
-  const configCount = await PlanConfig.countDocuments();
-  if (configCount === 0) {
-    console.log('Creating default plan configuration...');
-    await PlanConfig.create({
-      courseName: "MERN Stack",
-      courseTagline: "Full Stack Web Development",
-      oneTimePrice: 6000,
-      oneTimeOriginalPrice: 15000,
-      installment1Price: 3200,
-      installment2Price: 3200,
-      discountPercent: 10,
-      oneTimeFeatures: [
-        "Full MERN Stack Course Access",
-        "Practical Hands-on Training",
-        "100% Placement Assistance",
-        "Course Completion Certificate",
-        "Save 10% Extra using Referral Codes",
-      ],
-      installmentFeatures: [
-        "Full MERN Stack Course Access",
-        "Practical Hands-on Training",
-        "100% Placement Assistance",
-        "Course Completion Certificate",
-      ]
-    });
-  }
+let dbInitialized = false;
 
-  // Create default ref codes if not exists
-  const refCodeCount = await RefCode.countDocuments();
-  if (refCodeCount === 0) {
-    console.log('Creating default referral codes...');
-    await RefCode.create([
-      { code: "BEANGATE10", discount: "10%", active: true, created: "2024-07-01", uses: 0, creator: "admin" },
-      { code: "MERN10", discount: "10%", active: true, created: "2024-07-01", uses: 0, creator: "admin" },
-      { code: "REF10", discount: "10%", active: true, created: "2024-07-01", uses: 0, creator: "admin" }
-    ]);
+const initializeDBData = async () => {
+  if (dbInitialized) return;
+  try {
+    // Create default plan config if not exists
+    const configCount = await PlanConfig.countDocuments();
+    if (configCount === 0) {
+      console.log('Creating default plan configuration...');
+      await PlanConfig.create({
+        courseName: "MERN Stack",
+        courseTagline: "Full Stack Web Development",
+        oneTimePrice: 6000,
+        oneTimeOriginalPrice: 15000,
+        installment1Price: 3200,
+        installment2Price: 3200,
+        discountPercent: 10,
+        oneTimeFeatures: [
+          "Full MERN Stack Course Access",
+          "Practical Hands-on Training",
+          "100% Placement Assistance",
+          "Course Completion Certificate",
+          "Save 10% Extra using Referral Codes",
+        ],
+        installmentFeatures: [
+          "Full MERN Stack Course Access",
+          "Practical Hands-on Training",
+          "100% Placement Assistance",
+          "Course Completion Certificate",
+        ]
+      });
+    }
+
+    // Create default ref codes if not exists
+    const refCodeCount = await RefCode.countDocuments();
+    if (refCodeCount === 0) {
+      console.log('Creating default referral codes...');
+      await RefCode.create([
+        { code: "BEANGATE10", discount: "10%", active: true, created: "2024-07-01", uses: 0, creator: "admin" },
+        { code: "MERN10", discount: "10%", active: true, created: "2024-07-01", uses: 0, creator: "admin" },
+        { code: "REF10", discount: "10%", active: true, created: "2024-07-01", uses: 0, creator: "admin" }
+      ]);
+    }
+    dbInitialized = true;
+  } catch (err) {
+    console.error('Error initializing database data:', err.message);
   }
-})
-.catch((error) => {
-  console.error('Error connecting to MongoDB Atlas:', error.message);
+};
+
+const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) {
+    if (!dbInitialized) {
+      await initializeDBData();
+    }
+    return;
+  }
+  
+  await mongoose.connect(process.env.MONGO_URI || 'mongodb+srv://bhumigarg2727_db_user:DwEKJWovWB214zsH@cluster0.vh71iko.mongodb.net/?appName=Cluster0', {
+    serverSelectionTimeoutMS: 5000 // 5 seconds timeout
+  });
+  await initializeDBData();
+};
+
+// Database Connection Middleware (Awaited for serverless execution)
+app.use(async (req, res, next) => {
+  if (req.path === '/' || req.path === '/api') {
+    return next();
+  }
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error('Database connection error in request:', error.message);
+    res.status(500).json({ message: 'Database connection failed: ' + error.message });
+  }
 });
 
 // Basic Route
