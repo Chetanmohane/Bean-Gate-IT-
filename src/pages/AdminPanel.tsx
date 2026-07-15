@@ -1577,6 +1577,58 @@ const RegistrationsTab = ({
               </div>
 
               <div>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">College</label>
+                <input
+                  type="text"
+                  value={editingStudent.college}
+                  onChange={(e) => setEditingStudent({ ...editingStudent, college: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-indigo-500 transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">City</label>
+                <input
+                  type="text"
+                  value={editingStudent.city}
+                  onChange={(e) => setEditingStudent({ ...editingStudent, city: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-indigo-500 transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Referral Code</label>
+                <input
+                  type="text"
+                  value={editingStudent.referralCode || ""}
+                  onChange={(e) => setEditingStudent({ ...editingStudent, referralCode: e.target.value.toUpperCase() })}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-indigo-500 transition"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setEditingStudent(null)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition cursor-pointer border-none"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white text-xs font-bold rounded-xl transition cursor-pointer border-none shadow-sm"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const PaymentsTab = ({
   payments,
   onAddPayment,
@@ -1796,9 +1848,7 @@ const PaymentsTab = ({
                     <td className="px-5 py-4 font-extrabold text-emerald-600 dark:text-emerald-400 text-sm">₹{totalPaid.toLocaleString("en-IN")}</td>
                     <td className="px-5 py-4">
                       {hasDues ? (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-500/20 text-xs font-extrabold shadow-sm">
-                          {remaining} Dues
-                        </span>
+                        <span className="font-extrabold text-red-500 dark:text-red-400 text-sm">{remaining}</span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 px-2.5 py-1 rounded-full">
                           <FaCheckCircle className="text-[10px]" /> Cleared
@@ -1811,17 +1861,17 @@ const PaymentsTab = ({
                         {hasDues && (
                           <button
                             onClick={() => onAddPayment({ name: p.name, email: p.email, phone: p.phone, course: p.course })}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 text-xs font-bold rounded-lg transition duration-150 cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 text-xs font-bold rounded-lg transition duration-150 cursor-pointer"
                           >
                             <FaPlus className="text-[10px]" /> Update Due
                           </button>
                         )}
                         <button
                           onClick={() => onDeletePayment((p as any)._id || (p as any).id)}
-                          className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center hover:scale-105 active:scale-95 shadow-sm"
+                          className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center"
                           title="Delete Payment"
                         >
-                          <FaTrash className="text-xs" />
+                          <FaTrash className="text-sm" />
                         </button>
                       </div>
                     </td>
@@ -1829,7 +1879,7 @@ const PaymentsTab = ({
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={9} className="px-5 py-8 text-center text-slate-400 dark:text-slate-500 text-sm font-semibold">No payment records found.</td></tr>
+                <tr><td colSpan={userRole === "admin" ? 9 : 8} className="px-5 py-8 text-center text-slate-400 dark:text-slate-500 text-sm font-semibold">No payment records found.</td></tr>
               )}
             </tbody>
           </table>
