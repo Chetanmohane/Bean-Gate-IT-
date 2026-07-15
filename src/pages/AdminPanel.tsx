@@ -1856,7 +1856,7 @@ const DashboardTab = ({ registrations, payments }: { registrations: Registration
     const regPayments = payments.filter(p => p.email.toLowerCase() === r.email.toLowerCase() || p.phone === r.phone);
     if (regPayments.length === 0) return acc;
     
-    const balanceStr = getRemainingBalance(r.email, r.phone, payments).replace(/[₹,]/g, "");
+    const balanceStr = String(getRemainingBalance(r.email, r.phone, payments)).replace(/[₹,]/g, "");
     return acc + parseInt(balanceStr || "0");
   }, 0);
 
@@ -1867,10 +1867,10 @@ const DashboardTab = ({ registrations, payments }: { registrations: Registration
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-5 mb-8">
-        <Card className="hover:scale-[1.02] transition-transform duration-200"><StatCard label="Total Registrations" value={paidRegistrations.length} icon={<FaUsers className="text-blue-600 dark:text-blue-400 text-lg" />} iconBgClass="bg-blue-50 dark:bg-blue-500/10" /></Card>
+        <Card className="hover:scale-[1.02] transition-transform duration-200"><StatCard label="Total Registrations" value={registrations.length} icon={<FaUsers className="text-blue-600 dark:text-blue-400 text-lg" />} iconBgClass="bg-blue-50 dark:bg-blue-500/10" /></Card>
         <Card className="hover:scale-[1.02] transition-transform duration-200"><StatCard label="Payments Received" value={payments.length} icon={<FaMoneyBillWave className="text-green-600 dark:text-green-400 text-lg" />} iconBgClass="bg-green-50 dark:bg-green-500/10" /></Card>
         <Card className="hover:scale-[1.02] transition-transform duration-200"><StatCard label="Active Ref Codes" value={activeCodes} icon={<FaTags className="text-indigo-600 dark:text-indigo-400 text-lg" />} iconBgClass="bg-indigo-50 dark:bg-indigo-500/10" /></Card>
-        <Card className="hover:scale-[1.02] transition-transform duration-200"><StatCard label="Revenue (Est.)" value={"₹" + payments.reduce((acc, p) => acc + parseInt(p.planAmount.replace(/[₹,]/g, "")), 0).toLocaleString()} icon={<FaChartBar className="text-violet-600 dark:text-violet-400 text-lg" />} iconBgClass="bg-violet-50 dark:bg-violet-500/10" /></Card>
+        <Card className="hover:scale-[1.02] transition-transform duration-200"><StatCard label="Revenue (Est.)" value={"₹" + payments.reduce((acc, p) => acc + parseInt(String(p.planAmount).replace(/[₹,]/g, "") || "0"), 0).toLocaleString()} icon={<FaChartBar className="text-violet-600 dark:text-violet-400 text-lg" />} iconBgClass="bg-violet-50 dark:bg-violet-500/10" /></Card>
         <Card className="hover:scale-[1.02] transition-transform duration-200"><StatCard label="Outstanding Dues" value={"₹" + totalOutstandingDues.toLocaleString()} icon={<FaMoneyBillWave className="text-red-500 dark:text-red-400 text-lg" />} iconBgClass="bg-red-50 dark:bg-red-500/10" /></Card>
       </div>
 
@@ -1882,7 +1882,7 @@ const DashboardTab = ({ registrations, payments }: { registrations: Registration
             <FaUsers className="text-slate-400" />
           </div>
           <div className="divide-y divide-slate-100 dark:divide-white/5">
-            {paidRegistrations.slice(0, 3).map((r, i) => (
+            {registrations.slice(0, 3).map((r, i) => (
               <div key={i} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50/50 dark:hover:bg-white/5 transition">
                 <div>
                   <p className="font-bold text-slate-900 dark:text-white text-sm">{r.name}</p>
