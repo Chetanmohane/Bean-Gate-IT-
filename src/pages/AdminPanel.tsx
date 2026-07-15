@@ -1304,24 +1304,28 @@ const RegistrationsTab = ({
   const [search, setSearch] = useState("");
   const [editingStudent, setEditingStudent] = useState<Registration | null>(null);
   const [filterCourse, setFilterCourse] = useState("All");
+  const [filterPayment, setFilterPayment] = useState("All");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   
-  // Only display registrations that have a matching payment record (by email or phone)
-  const paidRegistrations = registrations.filter(r =>
-    payments.some(p => p.email.toLowerCase() === r.email.toLowerCase() || p.phone === r.phone)
-  );
+  const uniqueCourses = Array.from(new Set(registrations.map(r => r.course))).filter(Boolean);
 
-  const uniqueCourses = Array.from(new Set(paidRegistrations.map(r => r.course))).filter(Boolean);
+  const filtered = registrations.filter(r => {
+    // Payment Status Filter
+    const hasPayment = payments.some(p => p.email.toLowerCase() === r.email.toLowerCase() || p.phone === r.phone);
+    if (filterPayment === "Paid" && !hasPayment) return false;
+    if (filterPayment === "Unpaid" && hasPayment) return false;
 
-  const filtered = paidRegistrations.filter(r => {
+    // Search Filter
     const matchesSearch = r.name.toLowerCase().includes(search.toLowerCase()) ||
                           r.email.toLowerCase().includes(search.toLowerCase()) ||
                           r.course.toLowerCase().includes(search.toLowerCase());
     if (!matchesSearch) return false;
     
+    // Course Filter
     if (filterCourse !== "All" && r.course !== filterCourse) return false;
     
+    // Date Filter
     if (r.timestamp) {
       try {
         const rDate = new Date(r.timestamp);
@@ -1348,8 +1352,9 @@ const RegistrationsTab = ({
       alert("No data to download.");
       return;
     }
-    const headers = ["Name", "Email", "Phone", "Course", "College", "City", "Date", "Referral Code"];
+    const headers = ["Name", "Email", "Phone", "Course", "College", "City", "Payment Status", "Date", "Referral Code"];
     const rows = filtered.map(r => {
+      const hasPayment = payments.some(p => p.email.toLowerCase() === r.email.toLowerCase() || p.phone === r.phone);
       let dateStr = "";
       try { dateStr = new Date(r.timestamp).toISOString().split("T")[0]; } catch(e) { dateStr = String(r.timestamp); }
       return [
@@ -1359,6 +1364,7 @@ const RegistrationsTab = ({
         `"${r.course}"`,
         `"${r.college || "N/A"}"`,
         `"${r.city || "N/A"}"`,
+        `"${hasPayment ? "Paid" : "Unpaid"}"`,
         `"${dateStr}"`,
         `"${r.referralCode || ""}"`
       ].join(",");
@@ -1381,7 +1387,7 @@ const RegistrationsTab = ({
       {/* Search & Filters & Actions */}
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 w-full">
-          <div className="flex flex-col sm:flex-row gap-4 flex-1 w-full xl:max-w-3xl">
+          <div className="flex flex-col sm:flex-row gap-4 flex-1 w-full xl:max-w-4xl">
             <div className="relative flex-1 max-w-sm">
               <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm" />
               <input value={search} onChange={(e) => setSearch(e.target.value)}
@@ -1391,10 +1397,19 @@ const RegistrationsTab = ({
             <select 
               value={filterCourse} 
               onChange={(e) => setFilterCourse(e.target.value)}
-              className="w-full sm:w-48 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200"
+              className="w-full sm:w-44 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200"
             >
               <option value="All">All Courses</option>
               {uniqueCourses.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select 
+              value={filterPayment} 
+              onChange={(e) => setFilterPayment(e.target.value)}
+              className="w-full sm:w-44 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200"
+            >
+              <option value="All">All Payments</option>
+              <option value="Paid">Only Paid</option>
+              <option value="Unpaid">Only Unpaid</option>
             </select>
             <div className="flex gap-2 w-full sm:w-auto">
               <input 
@@ -1431,7 +1446,7 @@ const RegistrationsTab = ({
           <table className="w-full text-sm min-w-[800px]">
             <thead>
               <tr className="bg-slate-50/80 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
-                {["Name", "Email", "Phone", "Course", "College", "City", "Time"].map(h => (
+                {["Name", "Email", "Phone", "Course", "College", "City", "Payment Status", "Time"].map(h => (
                   <th key={h} className="text-left px-5 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{h}</th>
                 ))}
                 {userRole === "admin" && (
@@ -1440,41 +1455,51 @@ const RegistrationsTab = ({
               </tr>
             </thead>
             <tbody>
-              {filtered.map((r, i) => (
-                <tr key={i} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/5 transition">
-                  <td className="px-5 py-4 font-bold text-slate-900 dark:text-white text-sm">{r.name}</td>
-                  <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm">{r.email}</td>
-                  <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm font-mono">{r.phone}</td>
-                  <td className="px-5 py-4">
-                    <span className="bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 text-xs font-bold px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-500/20">{r.course}</span>
-                  </td>
-                  <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm">{r.college}</td>
-                  <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm">{r.city}</td>
-                  <td className="px-5 py-4 text-slate-400 dark:text-slate-500 text-xs font-semibold">{r.timestamp}</td>
-                  {userRole === "admin" && (
+              {filtered.map((r, i) => {
+                const hasPayment = payments.some(p => p.email.toLowerCase() === r.email.toLowerCase() || p.phone === r.phone);
+                return (
+                  <tr key={i} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/5 transition">
+                    <td className="px-5 py-4 font-bold text-slate-900 dark:text-white text-sm">{r.name}</td>
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm">{r.email}</td>
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm font-mono">{r.phone}</td>
                     <td className="px-5 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setEditingStudent(r)}
-                          className="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg transition border-none cursor-pointer"
-                          title="Edit Student"
-                        >
-                          <FaEdit className="text-sm" />
-                        </button>
-                        <button
-                          onClick={() => onDeleteRegistration(r.email, r.phone, (r as any)._id || (r as any).id)}
-                          className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer"
-                          title="Delete Student"
-                        >
-                          <FaTrash className="text-sm" />
-                        </button>
-                      </div>
+                      <span className="bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 text-xs font-bold px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-500/20">{r.course}</span>
                     </td>
-                  )}
-                </tr>
-              ))}
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm">{r.college}</td>
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm">{r.city}</td>
+                    <td className="px-5 py-4">
+                      {hasPayment ? (
+                        <span className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-full border border-emerald-100 dark:border-emerald-500/20">Paid</span>
+                      ) : (
+                        <span className="bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 text-xs font-bold px-2.5 py-1 rounded-full border border-rose-100 dark:border-rose-500/20">Unpaid</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-slate-400 dark:text-slate-500 text-xs font-semibold">{r.timestamp}</td>
+                    {userRole === "admin" && (
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setEditingStudent(r)}
+                            className="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg transition border-none cursor-pointer"
+                            title="Edit Student"
+                          >
+                            <FaEdit className="text-sm" />
+                          </button>
+                          <button
+                            onClick={() => onDeleteRegistration(r.email, r.phone, (r as any)._id || (r as any).id)}
+                            className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer"
+                            title="Delete Student"
+                          >
+                            <FaTrash className="text-sm" />
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
               {filtered.length === 0 && (
-                <tr><td colSpan={userRole === "admin" ? 8 : 7} className="px-5 py-8 text-center text-slate-400 dark:text-slate-500 text-sm font-semibold">No registrations found.</td></tr>
+                <tr><td colSpan={userRole === "admin" ? 9 : 8} className="px-5 py-8 text-center text-slate-400 dark:text-slate-500 text-sm font-semibold">No registrations found.</td></tr>
               )}
             </tbody>
           </table>

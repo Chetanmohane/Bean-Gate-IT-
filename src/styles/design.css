@@ -44,7 +44,24 @@ body {
   box-shadow: 0 4px 30px rgba(0,0,0,0.12);
 }
 
-/* Transition for theme change */
-[data-theme] * {
+/* Transition for theme change (selective to avoid wildcard scroll lag) */
+[data-theme] body,
+[data-theme] .bg-card,
+[data-theme] header,
+[data-theme] nav,
+[data-theme] footer,
+[data-theme] section,
+[data-theme] h1,
+[data-theme] h2,
+[data-theme] h3,
+[data-theme] h4,
+[data-theme] h5,
+[data-theme] h6,
+[data-theme] p,
+[data-theme] span,
+[data-theme] button,
+[data-theme] input,
+[data-theme] select,
+[data-theme] label {
   transition: background-color 0.3s, color 0.3s, border-color 0.3s;
 }

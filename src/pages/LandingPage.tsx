@@ -19,7 +19,7 @@ const LandingPage = () => {
   const sectionProps = {
     initial: { opacity: 0, y: 40 },
     whileInView: { opacity: 1, y: 0 },
-    viewport: { once: false, amount: 0.1 },
+    viewport: { once: true, amount: 0.1 },
     transition: { duration: 0.6, ease: "easeOut" }
   };
 
