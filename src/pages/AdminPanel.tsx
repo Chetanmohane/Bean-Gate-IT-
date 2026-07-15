@@ -1411,19 +1411,19 @@ const RegistrationsTab = ({
               <option value="Paid">Only Paid</option>
               <option value="Unpaid">Only Unpaid</option>
             </select>
-            <div className="flex gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <input 
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full sm:w-36 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200"
+                className="flex-1 sm:w-36 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200 cursor-pointer"
               />
-              <span className="text-slate-400 self-center">-</span>
+              <span className="text-slate-400 self-center shrink-0">-</span>
               <input 
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full sm:w-36 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200"
+                className="flex-1 sm:w-36 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200 cursor-pointer"
               />
             </div>
           </div>
@@ -2402,7 +2402,7 @@ const AdminPanel = () => {
       <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
 
         {/* Top Bar */}
-        <header className="bg-white/80 dark:bg-[#0e1726]/80 backdrop-blur-md border-b border-slate-100 dark:border-white/5 px-6 py-4 flex items-center justify-between sticky top-0 z-10 transition-colors duration-300">
+        <header className="bg-white/80 dark:bg-[#0e1726]/80 backdrop-blur-md border-b border-slate-100 dark:border-white/5 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-10 transition-colors duration-300">
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebarOpen(true)} className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-transparent border-none cursor-pointer lg:hidden flex items-center p-1">
               <FaBars className="text-lg" />
@@ -2442,7 +2442,7 @@ const AdminPanel = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-6 lg:p-8 overflow-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
           {activeTab === "dashboard"      && <DashboardTab registrations={filteredRegistrations} payments={filteredPayments} />}
           {activeTab === "registrations"  && (
             <RegistrationsTab
