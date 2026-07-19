@@ -29,23 +29,36 @@ const Pricing = ({
   const [promoCode, setPromoCode] = useState("");
   const [promoError, setPromoError] = useState("");
   const [promoSuccess, setPromoSuccess] = useState("");
-  const [pricingCfg, setPricingCfg] = useState<any>(null);
+  const [pricingCfg, setPricingCfg] = useState<any>(() => {
+    try {
+      const s = localStorage.getItem("bg_plan_config");
+      return s ? JSON.parse(s) : null;
+    } catch {
+      return null;
+    }
+  });
 
   useEffect(() => {
-    fetch("/api/planconfig")
-      .then(res => {
-        if (!res.ok) throw new Error();
-        return res.json();
-      })
-      .then(data => {
-        if (data) {
-          setPricingCfg(data);
-          localStorage.setItem("bg_plan_config", JSON.stringify(data));
-        }
-      })
-      .catch(e => {
-        console.warn("Failed to fetch planconfig in Pricing, using local storage cache:", e);
-      });
+    const fetchConfig = () => {
+      fetch("/api/planconfig")
+        .then(res => {
+          if (!res.ok) throw new Error();
+          return res.json();
+        })
+        .then(data => {
+          if (data) {
+            setPricingCfg(data);
+            localStorage.setItem("bg_plan_config", JSON.stringify(data));
+          }
+        })
+        .catch(e => {
+          console.warn("Failed to fetch planconfig in Pricing, using local storage cache:", e);
+        });
+    };
+
+    fetchConfig();
+    const interval = setInterval(fetchConfig, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -282,13 +295,24 @@ const Pricing = ({
                 </h3>
                 <p className="text-[11px] text-gray-400 leading-relaxed mb-4">{plan.description}</p>
 
-                <div className="flex items-baseline gap-2 mb-5 border-b border-white/5 pb-4">
-                  <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">{plan.price}</span>
-                  {plan.originalPrice && (
-                    <span className="text-sm text-gray-500 line-through font-medium">{plan.originalPrice}</span>
-                  )}
-                  <span className="text-[10px] text-gray-400 uppercase tracking-widest ml-1 font-semibold">
-                    {plan.id === "one-time" ? "/ full batch" : "/ installment"}
+                <div className="flex flex-col gap-0.5 mb-5 border-b border-white/5 pb-4 text-left">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">{plan.price}</span>
+                    {plan.originalPrice && (
+                      <span className="text-sm text-gray-500 line-through font-medium">{plan.originalPrice}</span>
+                    )}
+                    <span className="text-[10px] text-gray-400 uppercase tracking-widest ml-1 font-semibold">
+                      {plan.id === "one-time" ? "/ full batch" : "/ installment"}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-orange-400 font-extrabold tracking-wide uppercase">
+                    + 18% GST (Total: {(() => {
+                      const baseAmt = plan.id === "one-time" 
+                        ? (appliedDiscount ? disc(oneTimePrice) : oneTimePrice)
+                        : (appliedDiscount ? disc(inst1Price) : inst1Price);
+                      const totalWithGST = Math.round(baseAmt * 1.18);
+                      return fmt(totalWithGST);
+                    })()})
                   </span>
                 </div>
 

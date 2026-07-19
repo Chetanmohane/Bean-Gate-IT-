@@ -59,6 +59,7 @@ interface PlanConfig {
   courseTagline: string;
   oneTimePrice: number;
   oneTimeOriginalPrice: number;
+  heroOfferPrice: number;
   installment1Price: number;
   installment2Price: number;
   discountPercent: number;
@@ -67,6 +68,8 @@ interface PlanConfig {
   courses?: string[];
   colleges?: string[];
   cities?: string[];
+  totalSeats?: number;
+  manualSeatsOffset?: number;
 }
 
 const DEFAULT_PLAN_CONFIG: PlanConfig = {
@@ -74,6 +77,7 @@ const DEFAULT_PLAN_CONFIG: PlanConfig = {
   courseTagline: "Full Stack Web Development",
   oneTimePrice: 6000,
   oneTimeOriginalPrice: 15001,
+  heroOfferPrice: 6000,
   installment1Price: 3200,
   installment2Price: 3200,
   discountPercent: 10,
@@ -93,6 +97,8 @@ const DEFAULT_PLAN_CONFIG: PlanConfig = {
   courses: ["Frontend Developer", "Backend Developer", "MERN Stack"],
   colleges: ["PDPS College", "BUIT", "Other"],
   cities: ["Bhopal", "Indore", "Jabalpur", "Other"],
+  totalSeats: 50,
+  manualSeatsOffset: 32,
 };
 
 const loadPlanConfig = (): PlanConfig => {
@@ -386,7 +392,7 @@ const PlansTab = () => {
       {/* Course Info */}
       <Card className="p-6 mb-6 mt-6">
         <p className="text-sm font-extrabold text-slate-800 dark:text-white mb-4">Course Information</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className={labelCls}>Course Name</label>
             <input className={inputCls} value={cfg.courseName} onChange={e => update("courseName", e.target.value)} placeholder="e.g. MERN Stack" />
@@ -395,9 +401,29 @@ const PlansTab = () => {
             <label className={labelCls}>Course Tagline</label>
             <input className={inputCls} value={cfg.courseTagline} onChange={e => update("courseTagline", e.target.value)} placeholder="e.g. Full Stack Web Development" />
           </div>
-          <div className="sm:col-span-2 lg:col-span-1">
-            <label className={labelCls}>Referral Code Discount (%)</label>
+          <div>
+            <label className={labelCls}>Hero Special Offer Price (₹)</label>
+            <input type="number" min="0" className={inputCls} value={cfg.heroOfferPrice} onChange={e => update("heroOfferPrice", parseInt(e.target.value) || 0)} />
+          </div>
+          <div>
+            <label className={labelCls}>Referral Discount (%)</label>
             <input type="number" min="0" max="50" className={inputCls} value={cfg.discountPercent} onChange={e => update("discountPercent", parseInt(e.target.value) || 0)} />
+          </div>
+        </div>
+      </Card>
+
+      {/* Seats Configuration */}
+      <Card className="p-6 mb-6">
+        <p className="text-sm font-extrabold text-slate-800 dark:text-white mb-4">Seats Counter Configuration</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelCls}>Total Seats Capacity</label>
+            <input type="number" min="0" className={inputCls} value={cfg.totalSeats ?? 50} onChange={e => update("totalSeats", parseInt(e.target.value) || 0)} placeholder="e.g. 50" />
+          </div>
+          <div>
+            <label className={labelCls}>Initial Seats Left (Manual Offset)</label>
+            <input type="number" min="0" className={inputCls} value={cfg.manualSeatsOffset ?? 32} onChange={e => update("manualSeatsOffset", parseInt(e.target.value) || 0)} placeholder="e.g. 32" />
+            <p className="text-xs text-slate-400 mt-1 font-medium">Set the initial seats left. Website count will show this value minus registered students.</p>
           </div>
         </div>
       </Card>
@@ -410,7 +436,7 @@ const PlansTab = () => {
             <p className="font-extrabold text-slate-800 dark:text-white text-sm">One-Time Payment Plan</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
             <div>
               <label className={labelCls}>Full Price (₹)</label>
               <input type="number" min="0" className={inputCls} value={cfg.oneTimePrice} onChange={e => update("oneTimePrice", parseInt(e.target.value) || 0)} />
@@ -452,7 +478,7 @@ const PlansTab = () => {
             <p className="font-extrabold text-slate-800 dark:text-white text-sm">Flexible Installment Plan</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
             <div>
               <label className={labelCls}>1st Installment (₹)</label>
               <input type="number" min="0" className={inputCls} value={cfg.installment1Price} onChange={e => update("installment1Price", parseInt(e.target.value) || 0)} />
@@ -493,7 +519,7 @@ const PlansTab = () => {
         <p className="text-sm font-extrabold text-slate-800 dark:text-white mb-2">Manage Dropdown Selection Lists</p>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 font-medium font-sans">Add, remove, or edit options shown in the student registration form.</p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 1. Courses Dropdown */}
           <div className="bg-slate-50 dark:bg-white/5 border border-slate-150 dark:border-white/5 rounded-2xl p-4">
             <p className="text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest mb-4">Courses Dropdown</p>
@@ -1669,8 +1695,8 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
                                 {paidReferredStudents.length === 0 ? (
                                   <p className="text-sm text-slate-400 dark:text-slate-500 font-semibold py-3">No students referred yet by this sub-admin.</p>
                                 ) : (
-                                  <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
-                                    <table className="w-full text-sm">
+                                  <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl overflow-x-auto">
+                                    <table className="w-full text-sm min-w-[700px]">
                                       <thead>
                                         <tr className="bg-slate-50/80 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
                                           {["Student Name", "Email", "Phone", "Course", "Referral Code", "Payment"].map(h => (
@@ -1981,15 +2007,15 @@ const RegistrationsTab = ({
 
       {/* Desktop Table View */}
       <Card className="hidden md:block overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto w-full max-w-full">
           <table className="w-full text-sm min-w-[800px]">
             <thead>
               <tr className="bg-slate-50/80 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
                 {["Name", "Email", "Phone", "Course", "College", "City", "Payment Status", "Time"].map(h => (
-                  <th key={h} className="text-left px-5 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{h}</th>
+                  <th key={h} className="text-left px-5 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
                 ))}
                 {userRole === "admin" && (
-                  <th className="text-left px-5 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
+                  <th className="text-left px-5 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Actions</th>
                 )}
               </tr>
             </thead>
@@ -1998,24 +2024,24 @@ const RegistrationsTab = ({
                 const hasPayment = payments.some(p => p.email.toLowerCase() === r.email.toLowerCase() || p.phone === r.phone);
                 return (
                   <tr key={i} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/5 transition">
-                    <td className="px-5 py-4 font-bold text-slate-900 dark:text-white text-sm">{r.name}</td>
-                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm">{r.email}</td>
-                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm font-mono">{r.phone}</td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 font-bold text-slate-900 dark:text-white text-sm whitespace-nowrap">{r.name}</td>
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm whitespace-nowrap">{r.email}</td>
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm font-mono whitespace-nowrap">{r.phone}</td>
+                    <td className="px-5 py-4 whitespace-nowrap">
                       <span className="bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 text-xs font-bold px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-500/20">{r.course}</span>
                     </td>
-                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm">{r.college}</td>
-                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm">{r.city}</td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm whitespace-nowrap">{r.college}</td>
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm whitespace-nowrap">{r.city}</td>
+                    <td className="px-5 py-4 whitespace-nowrap">
                       {hasPayment ? (
                         <span className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-full border border-emerald-100 dark:border-emerald-500/20">Paid</span>
                       ) : (
                         <span className="bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 text-xs font-bold px-2.5 py-1 rounded-full border border-rose-100 dark:border-rose-500/20">Unpaid</span>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-slate-400 dark:text-slate-500 text-xs font-semibold">{r.timestamp}</td>
+                    <td className="px-5 py-4 text-slate-400 dark:text-slate-500 text-xs font-semibold whitespace-nowrap">{r.timestamp}</td>
                     {userRole === "admin" && (
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setEditingStudent(r)}
@@ -2431,12 +2457,12 @@ const PaymentsTab = ({
 
       {/* Desktop Table View */}
       <Card className="hidden lg:block overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto w-full max-w-full">
           <table className="w-full text-sm min-w-[1000px]">
             <thead>
               <tr className="bg-slate-50/80 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
                 {["Name", "Email", "UTR / TXN ID", "Plan / Option", "Paid Amount", "Total Paid", "Remaining Dues", "Time", "Action"].map(h => (
-                  <th key={h} className="text-left px-5 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{h}</th>
+                  <th key={h} className="text-left px-5 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -2447,26 +2473,26 @@ const PaymentsTab = ({
                 
                 const totalPaid = payments
                   .filter(x => x.email.toLowerCase() === p.email.toLowerCase())
-                  .reduce((acc, x) => acc + parseInt(String(p.planAmount).replace(/[₹,]/g, "") || "0"), 0);
+                  .reduce((acc, x) => acc + parseInt(String(x.planAmount).replace(/[₹,]/g, "") || "0"), 0);
                 return (
                   <tr key={i} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/5 transition">
-                    <td className="px-5 py-4 font-bold text-slate-900 dark:text-white text-sm">{p.name}</td>
-                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm">{p.email}</td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 font-bold text-slate-900 dark:text-white text-sm whitespace-nowrap">{p.name}</td>
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm whitespace-nowrap">{p.email}</td>
+                    <td className="px-5 py-4 whitespace-nowrap">
                       <span className="font-mono bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 text-xs font-bold tracking-wider">
                         {p.transactionId}
                       </span>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 whitespace-nowrap">
                       <span className={`text-[10px] font-black tracking-wider px-2.5 py-1.5 rounded-full uppercase ${getPlanBadgeClass(p.planTitle)}`}>
                         {p.planTitle}
                       </span>
                     </td>
-                    <td className="px-5 py-4 font-bold text-slate-700 dark:text-slate-300 text-sm">
+                    <td className="px-5 py-4 font-bold text-slate-700 dark:text-slate-300 text-sm whitespace-nowrap">
                       {String(p.planAmount).startsWith("₹") ? p.planAmount : `₹${parseInt(String(p.planAmount)).toLocaleString("en-IN")}`}
                     </td>
-                    <td className="px-5 py-4 font-extrabold text-emerald-600 dark:text-emerald-400 text-sm">₹{totalPaid.toLocaleString("en-IN")}</td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 font-extrabold text-emerald-600 dark:text-emerald-400 text-sm whitespace-nowrap">₹{totalPaid.toLocaleString("en-IN")}</td>
+                    <td className="px-5 py-4 whitespace-nowrap">
                       {hasDues ? (
                         <span className="font-extrabold text-red-500 dark:text-red-400 text-sm">{remaining}</span>
                       ) : (
@@ -2475,8 +2501,8 @@ const PaymentsTab = ({
                         </span>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-slate-400 dark:text-slate-500 text-xs font-semibold">{p.timestamp}</td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 text-slate-400 dark:text-slate-500 text-xs font-semibold whitespace-nowrap">{p.timestamp}</td>
+                    <td className="px-5 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         {hasDues && (
                           <button
@@ -2715,6 +2741,8 @@ const AdminPanel = () => {
 
   useEffect(() => {
     autoMigrateData().then(() => fetchRegistrationsAndPayments());
+    const interval = setInterval(fetchRegistrationsAndPayments, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleDeleteRegistration = async (email: string, phone: string, id?: string) => {
@@ -3036,7 +3064,7 @@ const AdminPanel = () => {
       </aside>
 
       {/* ── Main Content ── */}
-      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
+      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen min-w-0">
 
         {/* Top Bar */}
         <header className="bg-white/80 dark:bg-[#0e1726]/80 backdrop-blur-md border-b border-slate-100 dark:border-white/5 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-10 transition-colors duration-300">
@@ -3079,7 +3107,7 @@ const AdminPanel = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
+        <main className="flex-1 p-4 sm:p-5 lg:p-6 min-w-0 overflow-x-hidden overflow-y-auto">
           {activeTab === "dashboard"      && <DashboardTab registrations={filteredRegistrations} payments={filteredPayments} />}
           {activeTab === "registrations"  && (
             <RegistrationsTab

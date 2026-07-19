@@ -1,10 +1,45 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import bgImage from "../assets/bg.png"; 
 import { FaCheckCircle, FaWhatsapp } from "react-icons/fa";
 import { FaReact, FaNodeJs } from "react-icons/fa";
 import { SiExpress, SiMongodb } from "react-icons/si";
 
 const Hero = () => {
+  const [cfg, setCfg] = useState<any>(() => {
+    try {
+      const s = localStorage.getItem("bg_plan_config");
+      return s ? JSON.parse(s) : { heroOfferPrice: 6000 };
+    } catch {
+      return { heroOfferPrice: 6000 };
+    }
+  });
+
+  useEffect(() => {
+    const fetchConfig = () => {
+      fetch("/api/planconfig")
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.heroOfferPrice !== undefined) {
+            setCfg(data);
+            localStorage.setItem("bg_plan_config", JSON.stringify(data));
+          }
+        })
+        .catch(err => {
+          console.warn("Failed to load planconfig in Hero, using local cache:", err);
+          try {
+            const s = localStorage.getItem("bg_plan_config");
+            if (s) {
+              setCfg(JSON.parse(s));
+            }
+          } catch (e) {}
+        });
+    };
+
+    fetchConfig();
+    const interval = setInterval(fetchConfig, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <section
       className="relative min-h-screen pt-24 pb-16 bg-cover bg-center bg-no-repeat overflow-hidden flex items-center"
@@ -50,7 +85,7 @@ const Hero = () => {
               {/* Fee block */}
               <div className="sm:col-span-5 flex flex-col justify-center border-b sm:border-b-0 sm:border-r border-white/5 pb-4 sm:pb-0 sm:pr-6 text-left">
                 <p className="text-[10px] text-gray-500 font-extrabold uppercase tracking-wider mb-1">Special Discount Fee</p>
-                <h2 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-500 tracking-tight">₹6,000</h2>
+                <h2 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-500 tracking-tight">₹{cfg.heroOfferPrice.toLocaleString("en-IN")}</h2>
               </div>
 
               {/* Checklist block */}

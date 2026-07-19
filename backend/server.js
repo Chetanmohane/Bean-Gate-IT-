@@ -55,7 +55,9 @@ const initializeDBData = async () => {
         ],
         courses: ["Frontend Developer", "Backend Developer", "MERN Stack"],
         colleges: ["PDPS College", "BUIT", "Other"],
-        cities: ["Bhopal", "Indore", "Jabalpur", "Other"]
+        cities: ["Bhopal", "Indore", "Jabalpur", "Other"],
+        totalSeats: 50,
+        manualSeatsOffset: 32
       });
     } else {
       // Check if existing configuration is missing courses, colleges or cities arrays
@@ -74,9 +76,26 @@ const initializeDBData = async () => {
           existing.cities = ["Bhopal", "Indore", "Jabalpur", "Other"];
           updated = true;
         }
+        if (existing.totalSeats === undefined) {
+          existing.totalSeats = 50;
+          updated = true;
+        }
+        if (existing.manualSeatsOffset === undefined) {
+          existing.manualSeatsOffset = 32;
+          updated = true;
+        }
+        if (!existing.seatsOffsetUpdatedAt) {
+          existing.seatsOffsetUpdatedAt = new Date();
+          updated = true;
+        }
+        if (existing.manualSeatsOffsetRegistrationsCount === undefined) {
+          const regCount = await Registration.countDocuments();
+          existing.manualSeatsOffsetRegistrationsCount = regCount;
+          updated = true;
+        }
         if (updated) {
           await existing.save();
-          console.log('Successfully migrated and seeded missing dropdown options on existing DB config.');
+          console.log('Successfully migrated and seeded missing fields on existing DB config.');
         }
       }
     }
@@ -225,6 +244,18 @@ app.get('/api/planconfig', async (req, res) => {
 
 app.put('/api/planconfig/:id', async (req, res) => {
   try {
+    const current = await PlanConfig.findById(req.params.id);
+    if (current) {
+      const bodyOffset = req.body.manualSeatsOffset !== undefined ? Number(req.body.manualSeatsOffset) : undefined;
+      const bodyCapacity = req.body.totalSeats !== undefined ? Number(req.body.totalSeats) : undefined;
+      const offsetChanged = bodyOffset !== undefined && bodyOffset !== current.manualSeatsOffset;
+      const capacityChanged = bodyCapacity !== undefined && bodyCapacity !== current.totalSeats;
+      if (offsetChanged || capacityChanged || current.manualSeatsOffsetRegistrationsCount === undefined) {
+        req.body.seatsOffsetUpdatedAt = new Date();
+        const regCount = await Registration.countDocuments();
+        req.body.manualSeatsOffsetRegistrationsCount = regCount;
+      }
+    }
     const updated = await PlanConfig.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(updated);
   } catch (error) { res.status(400).json({ message: error.message }); }

@@ -32,27 +32,70 @@ const Offer = ({
   const [colleges, setColleges] = useState<string[]>(["PDPS College", "BUIT", "Other"]);
   const [cities, setCities] = useState<string[]>(["Bhopal", "Indore", "Jabalpur", "Other"]);
 
-  useEffect(() => {
-    fetch("/api/planconfig")
-      .then((res) => {
-        if (!res.ok) throw new Error("API failed");
-        return res.json();
-      })
-      .then((data) => {
-        if (data) {
-          if (Array.isArray(data.courses) && data.courses.length > 0) setCourses(data.courses);
-          if (Array.isArray(data.colleges) && data.colleges.length > 0) setColleges(data.colleges);
-          if (Array.isArray(data.cities) && data.cities.length > 0) setCities(data.cities);
-        }
-      })
-      .catch((err) => {
-        console.warn("Failed to load dynamic dropdown config, using local fallbacks:", err);
-      });
-  }, []);
-
   const [referralCode, setReferralCode] = useState(appliedDiscount ? "BEANGATE10" : "");
   const [promoError, setPromoError] = useState("");
   const [promoSuccess, setPromoSuccess] = useState(appliedDiscount ? "Referral code applied! 10% Discount saved." : "");
+
+  const [cfg, setCfg] = useState<any>(() => {
+    try {
+      const s = localStorage.getItem("bg_plan_config");
+      return s ? JSON.parse(s) : {
+        courseName: "MERN Stack",
+        oneTimePrice: 6000,
+        oneTimeOriginalPrice: 15000,
+        installment1Price: 3200,
+        installment2Price: 3200,
+        discountPercent: 10,
+        totalSeats: 50,
+        manualSeatsOffset: 32,
+      };
+    } catch {
+      return {
+        courseName: "MERN Stack",
+        oneTimePrice: 6000,
+        oneTimeOriginalPrice: 15000,
+        installment1Price: 3200,
+        installment2Price: 3200,
+        discountPercent: 10,
+        totalSeats: 50,
+        manualSeatsOffset: 32,
+      };
+    }
+  });
+
+  useEffect(() => {
+    const fetchConfig = () => {
+      fetch("/api/planconfig")
+        .then((res) => {
+          if (!res.ok) throw new Error("API failed");
+          return res.json();
+        })
+        .then((data) => {
+          if (data && data.oneTimePrice) {
+            setCfg(data);
+            localStorage.setItem("bg_plan_config", JSON.stringify(data));
+            if (Array.isArray(data.courses) && data.courses.length > 0) setCourses(data.courses);
+            if (Array.isArray(data.colleges) && data.colleges.length > 0) setColleges(data.colleges);
+            if (Array.isArray(data.cities) && data.cities.length > 0) setCities(data.cities);
+          }
+        })
+        .catch((err) => {
+          console.warn("Failed to load dynamic dropdown config, using local fallbacks:", err);
+          try {
+            const s = localStorage.getItem("bg_plan_config");
+            if (s) {
+              setCfg(JSON.parse(s));
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        });
+    };
+
+    fetchConfig();
+    const interval = setInterval(fetchConfig, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Sync selectedPlanId prop with formData state
   useEffect(() => {
@@ -65,13 +108,13 @@ const Offer = ({
       if (!referralCode) {
         setReferralCode("BEANGATE10");
       }
-      setPromoSuccess("Referral code applied! 10% Discount saved.");
+      setPromoSuccess(`Referral code applied! ${cfg.discountPercent}% Discount saved.`);
       setPromoError("");
     } else {
       setReferralCode("");
       setPromoSuccess("");
     }
-  }, [appliedDiscount]);
+  }, [appliedDiscount, cfg.discountPercent]);
 
   const handleApplyReferral = () => {
     let validCodes = ["BEANGATE10", "REF10", "MERN10"];
@@ -95,14 +138,14 @@ const Offer = ({
         setAppliedDiscount(false);
       } else {
         setAppliedDiscount(true);
-        setPromoSuccess("Referral code applied! 10% Discount saved.");
+        setPromoSuccess(`Referral code applied! ${cfg.discountPercent}% Discount saved.`);
         setPromoError("");
       }
     } else {
       const isFallbackDefault = ["BEANGATE10", "REF10", "MERN10"].includes(inputCode);
       if (isFallbackDefault) {
         setAppliedDiscount(true);
-        setPromoSuccess("Referral code applied! 10% Discount saved.");
+        setPromoSuccess(`Referral code applied! ${cfg.discountPercent}% Discount saved.`);
         setPromoError("");
       } else {
         setPromoError("Invalid referral code.");
@@ -119,7 +162,7 @@ const Offer = ({
   };
 
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
-  const [enrolledCount, setEnrolledCount] = useState(32); // Fallback so seatsLeft = 18
+  const [rawRegistrations, setRawRegistrations] = useState<any[]>([]);
 
   // Real-time End of Day Timer
   useEffect(() => {
@@ -142,36 +185,49 @@ const Offer = ({
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch Real Seats Count
+  // Fetch Completed Registrations Count
   useEffect(() => {
     const fetchRegistrations = async () => {
       try {
         const res = await fetch("/api/registrations");
         if (res.ok) {
           const data = await res.json();
-          setEnrolledCount(data.length);
-          localStorage.setItem("bg_registrations", JSON.stringify(data));
+          const registrationsArray = Array.isArray(data) ? data : [];
+          setRawRegistrations(registrationsArray);
+          localStorage.setItem("bg_registrations_cache", JSON.stringify(registrationsArray));
         } else {
           throw new Error("Failed to fetch");
         }
       } catch (err) {
-        const stored = localStorage.getItem("bg_registrations");
+        const stored = localStorage.getItem("bg_registrations_cache");
         if (stored) {
           try {
-            const parsed = JSON.parse(stored);
-            setEnrolledCount(Array.isArray(parsed) ? parsed.length : 32);
+            setRawRegistrations(JSON.parse(stored) || []);
           } catch {
-            setEnrolledCount(32);
+            setRawRegistrations([]);
           }
         }
       }
     };
+
     fetchRegistrations();
+    const interval = setInterval(fetchRegistrations, 5000);
+    return () => clearInterval(interval);
   }, []);
 
-  const totalSeats = 50;
-  const seatsLeft = Math.max(0, totalSeats - enrolledCount);
-  const seatsPercentage = Math.min(100, Math.round((enrolledCount / totalSeats) * 100));
+  const totalSeats = cfg.totalSeats ?? 50;
+  const manualSeatsOffset = cfg.manualSeatsOffset ?? 32;
+  const baseRegCount = cfg.manualSeatsOffsetRegistrationsCount ?? 0;
+
+  const currentRegCount = rawRegistrations.length;
+  // Calculate new registrations since the manual offset was last set/saved
+  const newRegs = Math.max(0, currentRegCount - baseRegCount);
+
+  const seatsLeft = Math.max(0, manualSeatsOffset - newRegs);
+
+  // Progress bar represents seats filled (so it grows longer as more seats are taken)
+  const seatsFilled = totalSeats - seatsLeft;
+  const seatsPercentage = Math.min(100, Math.round((seatsFilled / totalSeats) * 100));
 
   const [errors, setErrors] = useState<Record<string, boolean>>({});
 
@@ -228,10 +284,10 @@ const Offer = ({
     });
   };
 
-  const basePrice = 6000;
-  const currentPrice = appliedDiscount ? basePrice * 0.9 : basePrice;
-  const saveAmount = 15000 - currentPrice;
-  const savePercent = Math.round((saveAmount / 15000) * 100);
+  const basePrice = cfg.oneTimePrice;
+  const currentPrice = appliedDiscount ? Math.round(basePrice * (1 - cfg.discountPercent / 100)) : basePrice;
+  const saveAmount = cfg.oneTimeOriginalPrice - currentPrice;
+  const savePercent = Math.round((saveAmount / cfg.oneTimeOriginalPrice) * 100);
 
   return (
     <section id="reviews" className="py-20 bg-gray-50 scroll-mt-24">
@@ -257,7 +313,7 @@ const Offer = ({
                     {/* Left Side */}
                     <div className="text-center">
                       <p className="text-gray-400 text-[11px] font-semibold tracking-wide uppercase mb-1">Actual Price</p>
-                      <p className="text-xl sm:text-2xl font-bold text-gray-400 line-through">₹15,000</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-400 line-through">₹{cfg.oneTimeOriginalPrice.toLocaleString("en-IN")}</p>
                     </div>
                     {/* Divider */}
                     <div className="absolute left-1/2 top-1 bottom-1 w-[1px] bg-gray-200 -translate-x-1/2"></div>
@@ -422,15 +478,15 @@ const Offer = ({
                   onChange={handleChange}
                   className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none"
                 >
-                  <option value="one-time">One-Time Payment Plan ({appliedDiscount ? "₹5,400" : "₹6,000"})</option>
-                  <option value="inst-1">Flexible Installment Plan ({appliedDiscount ? "₹2,880" : "₹3,200"})</option>
+                  <option value="one-time">One-Time Payment Plan ({appliedDiscount ? `₹${Math.round(cfg.oneTimePrice * (1 - cfg.discountPercent / 100)).toLocaleString("en-IN")}` : `₹${cfg.oneTimePrice.toLocaleString("en-IN")}`})</option>
+                  <option value="inst-1">Flexible Installment Plan ({appliedDiscount ? `₹${Math.round(cfg.installment1Price * (1 - cfg.discountPercent / 100)).toLocaleString("en-IN")}` : `₹${cfg.installment1Price.toLocaleString("en-IN")}`})</option>
                 </select>
               </div>
 
               {/* Referral Code Field */}
               <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 text-left">
                 <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-500 mb-1.5">
-                  Referral Code (Optional) - Save 10% Instantly
+                  Referral Code (Optional) - Save {cfg.discountPercent}% Instantly
                 </label>
                 <div className="flex gap-2">
                   <input

@@ -55,7 +55,7 @@ const navigate = useNavigate();
           </div>
 
 {/* Desktop Menu */}
-<div className="hidden lg:flex items-center gap-8">
+<div className="hidden md:flex items-center gap-8">
   {navLinks.map((item) => (
     <a
       key={item.id}
@@ -70,13 +70,13 @@ const navigate = useNavigate();
 </div>
 
 {/* Mobile Menu Button */}
-<div className="flex items-center gap-3 lg:hidden">
+<div className="flex items-center gap-3 md:hidden">
   {/* Enroll Button */}
   {/* Hamburger Icon */}
 </div>
 
           {/* Desktop Button */}
-<div className="hidden lg:block">
+<div className="hidden md:block">
   <motion.button
     whileHover={{ scale: 1.05 }}
     whileTap={{ scale: 0.95 }}
@@ -101,7 +101,7 @@ const navigate = useNavigate();
   </motion.button>
 </div>
           {/* Mobile Right Side */}
-       <div className="flex items-center gap-3 lg:hidden">
+       <div className="flex items-center gap-3 md:hidden">
   <motion.button
     whileTap={{ scale: 0.95 }}
     onClick={() => {
@@ -142,7 +142,7 @@ const navigate = useNavigate();
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -30 }}
             transition={{ duration: 0.3 }}
-            className="lg:hidden bg-[#071428] border-t border-white/10"
+            className="md:hidden bg-[#071428] border-t border-white/10"
           >
           <div className="flex flex-col px-6 py-5 space-y-4">
   {navLinks.map((item) => (

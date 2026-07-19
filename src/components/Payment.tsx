@@ -1,5 +1,5 @@
 import { FaQrcode } from "react-icons/fa";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import qr from "../assets/qr-beangate.png";
@@ -21,6 +21,62 @@ function Payment() {
   const [promoCode, setPromoCode] = useState(initialReferralCode);
   const [promoError, setPromoError] = useState("");
   const [promoSuccess, setPromoSuccess] = useState(initialDiscountApplied ? "Referral code applied! 10% Discount saved." : "");
+
+  const [cfg, setCfg] = useState<any>(() => {
+    try {
+      const s = localStorage.getItem("bg_plan_config");
+      return s ? JSON.parse(s) : {
+        courseName: "MERN Stack",
+        oneTimePrice: 6000,
+        installment1Price: 3200,
+        installment2Price: 3200,
+        discountPercent: 10,
+      };
+    } catch {
+      return {
+        courseName: "MERN Stack",
+        oneTimePrice: 6000,
+        installment1Price: 3200,
+        installment2Price: 3200,
+        discountPercent: 10,
+      };
+    }
+  });
+
+  useEffect(() => {
+    const fetchConfig = () => {
+      fetch("/api/planconfig")
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.oneTimePrice) {
+            setCfg(data);
+            localStorage.setItem("bg_plan_config", JSON.stringify(data));
+            if (initialDiscountApplied) {
+              setPromoSuccess(`Referral code applied! ${data.discountPercent}% Discount saved.`);
+            }
+          }
+        })
+        .catch(err => {
+          console.warn("Failed to load planconfig from DB, trying local storage:", err);
+          try {
+            const s = localStorage.getItem("bg_plan_config");
+            if (s) {
+              const parsed = JSON.parse(s);
+              setCfg(parsed);
+              if (initialDiscountApplied) {
+                setPromoSuccess(`Referral code applied! ${parsed.discountPercent}% Discount saved.`);
+              }
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        });
+    };
+
+    fetchConfig();
+    const interval = setInterval(fetchConfig, 5000);
+    return () => clearInterval(interval);
+  }, [initialDiscountApplied]);
 
   const handleApplyPromoCode = () => {
     let validCodes = ["BEANGATE10", "REF10", "MERN10"];
@@ -44,14 +100,14 @@ function Payment() {
         setDiscountAppliedState(false);
       } else {
         setDiscountAppliedState(true);
-        setPromoSuccess("Referral code applied! 10% Discount saved.");
+        setPromoSuccess(`Referral code applied! ${cfg.discountPercent}% Discount saved.`);
         setPromoError("");
       }
     } else {
       const isFallbackDefault = ["BEANGATE10", "REF10", "MERN10"].includes(inputCode);
       if (isFallbackDefault) {
         setDiscountAppliedState(true);
-        setPromoSuccess("Referral code applied! 10% Discount saved.");
+        setPromoSuccess(`Referral code applied! ${cfg.discountPercent}% Discount saved.`);
         setPromoError("");
       } else {
         setPromoError("Invalid referral code.");
@@ -63,23 +119,23 @@ function Payment() {
   const paymentPlans = [
     {
       id: "one-time",
-      title: discountAppliedState ? "MERN Stack - One-Time (10% Code Applied)" : "MERN Stack - One-Time Payment",
-      basePrice: discountAppliedState ? 5400 : 6000,
-      description: discountAppliedState ? "Special discounted price (10% OFF applied)" : "Pay full course fee once and save ₹400",
+      title: discountAppliedState ? `${cfg.courseName} - One-Time (${cfg.discountPercent}% Code Applied)` : `${cfg.courseName} - One-Time Payment`,
+      basePrice: discountAppliedState ? Math.round(cfg.oneTimePrice * (1 - cfg.discountPercent / 100)) : cfg.oneTimePrice,
+      description: discountAppliedState ? `Special discounted price (${cfg.discountPercent}% OFF applied)` : "Pay full course fee once and save ₹400",
       tag: discountAppliedState ? "Promo Applied" : "Best Value"
     },
     {
       id: "inst-1",
-      title: discountAppliedState ? "MERN Stack - 1st Installment (10% OFF)" : "MERN Stack - 1st Installment",
-      basePrice: discountAppliedState ? 2880 : 3200,
-      description: discountAppliedState ? "First installment (10% OFF applied)" : "First installment to start the course",
+      title: discountAppliedState ? `${cfg.courseName} - 1st Installment (${cfg.discountPercent}% OFF)` : `${cfg.courseName} - 1st Installment`,
+      basePrice: discountAppliedState ? Math.round(cfg.installment1Price * (1 - cfg.discountPercent / 100)) : cfg.installment1Price,
+      description: discountAppliedState ? `First installment (${cfg.discountPercent}% OFF applied)` : "First installment to start the course",
       tag: "Flexible"
     },
     {
       id: "inst-2",
-      title: discountAppliedState ? "MERN Stack - 2nd Installment (10% OFF)" : "MERN Stack - 2nd Installment",
-      basePrice: discountAppliedState ? 2880 : 3200,
-      description: discountAppliedState ? "Second installment (10% OFF applied)" : "Second installment during the course",
+      title: discountAppliedState ? `${cfg.courseName} - 2nd Installment (${cfg.discountPercent}% OFF)` : `${cfg.courseName} - 2nd Installment`,
+      basePrice: discountAppliedState ? Math.round(cfg.installment2Price * (1 - cfg.discountPercent / 100)) : cfg.installment2Price,
+      description: discountAppliedState ? `Second installment (${cfg.discountPercent}% OFF applied)` : "Second installment during the course",
       tag: "Flexible"
     }
   ];
@@ -692,7 +748,9 @@ function Payment() {
                   <span className="text-slate-500 font-bold text-xs">Remaining Dues</span>
                   <span className="font-black text-red-500 text-sm">
                     {(() => {
-                      const totalCourseBase = discountAppliedState ? 5400 : 6000;
+                      const totalCourseBase = discountAppliedState 
+                        ? Math.round(cfg.oneTimePrice * (1 - cfg.discountPercent / 100)) 
+                        : cfg.oneTimePrice;
                       const totalCourseWithGST = Math.round(totalCourseBase * 1.18);
                       const paid = parseInt((receiptData?.total || "0").replace(/[^0-9]/g, "")) || 0;
                       const due = totalCourseWithGST - paid;
