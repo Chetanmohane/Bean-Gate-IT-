@@ -74,46 +74,60 @@ const Pricing = ({
     }
   }, [appliedDiscount]);
 
-  const handleApplyPromo = () => {
-    let validCodes = ["BEANGATE10", "REF10", "MERN10"];
-    let parsed: any[] = [];
+  const [appliedCodeObj, setAppliedCodeObj] = useState<any>(null);
+
+  const handleApplyPromo = async () => {
+    let allRefCodes: any[] = [];
     try {
-      const stored = localStorage.getItem("bg_ref_codes");
-      if (stored) {
-        parsed = JSON.parse(stored);
-        validCodes = parsed.map((c: any) => c.code.trim().toUpperCase());
+      const res = await fetch("/api/refcodes");
+      if (res.ok) {
+        allRefCodes = await res.json();
       }
-    } catch (e) {
-      console.error(e);
+    } catch {}
+
+    if (!allRefCodes.length) {
+      try {
+        const stored = localStorage.getItem("bg_ref_codes");
+        if (stored) allRefCodes = JSON.parse(stored);
+      } catch {}
     }
 
     const inputCode = promoCode.trim().toUpperCase();
-    if (validCodes.includes(inputCode)) {
-      const matchedCode = parsed.find((c: any) => c.code.trim().toUpperCase() === inputCode);
-      if (matchedCode && (!matchedCode.active || (matchedCode.uses || 0) > 0)) {
-        setPromoError("This referral code has already been used.");
+    const matched = allRefCodes.find((c: any) => c.code.trim().toUpperCase() === inputCode);
+
+    if (matched) {
+      if (!matched.active || (matched.uses || 0) > 0) {
+        setPromoError("This referral code has already been used or is inactive.");
         setPromoSuccess("");
         setAppliedDiscount(false);
-      } else {
-        setAppliedDiscount(true);
-        setPromoSuccess("Referral code applied! Discount saved.");
-        setPromoError("");
+        setAppliedCodeObj(null);
+        return;
       }
+      setAppliedCodeObj(matched);
+      setAppliedDiscount(true);
+      const discVal = matched.discountPercent || parseInt(matched.discount) || 10;
+      const planNotice = matched.applicablePlan === "one-time" ? " (Valid for One-Time Plan Only)" : matched.applicablePlan === "installment" ? " (Valid for Installment Plan Only)" : "";
+      setPromoSuccess(`Referral code applied! ${discVal}% Discount saved.${planNotice}`);
+      setPromoError("");
     } else {
       const isFallbackDefault = ["BEANGATE10", "REF10", "MERN10"].includes(inputCode);
       if (isFallbackDefault) {
+        setAppliedCodeObj({ code: inputCode, discountPercent: 10, applicablePlan: "all" });
         setAppliedDiscount(true);
-        setPromoSuccess("Referral code applied! Discount saved.");
+        setPromoSuccess("Referral code applied! 10% Discount saved.");
         setPromoError("");
       } else {
         setPromoError("Invalid referral code.");
         setPromoSuccess("");
+        setAppliedDiscount(false);
+        setAppliedCodeObj(null);
       }
     }
   };
 
   const handleRemovePromo = () => {
     setAppliedDiscount(false);
+    setAppliedCodeObj(null);
     setPromoCode("");
     setPromoSuccess("");
     setPromoError("");
@@ -125,10 +139,22 @@ const Pricing = ({
   const originalPrice  = adminCfg?.oneTimeOriginalPrice ?? 15000;
   const inst1Price     = adminCfg?.installment1Price    ?? 3200;
   const inst2Price     = adminCfg?.installment2Price    ?? 3200;
-  const discPct        = adminCfg?.discountPercent      ?? 10;
-  const oneTimeDiscPct = adminCfg?.oneTimeDiscountPercent ?? discPct;
-  const inst1DiscPct    = adminCfg?.installment1DiscountPercent ?? discPct;
-  const inst2DiscPct    = adminCfg?.installment2DiscountPercent ?? discPct;
+
+  const defaultDiscPct    = adminCfg?.discountPercent      ?? 10;
+  const codeDiscPct       = appliedCodeObj?.discountPercent || null;
+
+  const oneTimeDiscPct    = appliedCodeObj?.applicablePlan === "installment"
+    ? 0
+    : (codeDiscPct !== null ? codeDiscPct : (adminCfg?.oneTimeDiscountPercent ?? defaultDiscPct));
+
+  const inst1DiscPct       = appliedCodeObj?.applicablePlan === "one-time"
+    ? 0
+    : (codeDiscPct !== null ? codeDiscPct : (adminCfg?.installment1DiscountPercent ?? defaultDiscPct));
+
+  const inst2DiscPct       = appliedCodeObj?.applicablePlan === "one-time"
+    ? 0
+    : (codeDiscPct !== null ? codeDiscPct : (adminCfg?.installment2DiscountPercent ?? defaultDiscPct));
+
   const oneTimeFeats   = adminCfg?.oneTimeFeatures      ?? ["Full MERN Stack Course Access","Practical Hands-on Training","100% Placement Assistance","Course Completion Certificate","Save Extra using Referral Codes"];
   const instFeats      = adminCfg?.installmentFeatures  ?? ["Full MERN Stack Course Access","Practical Hands-on Training","100% Placement Assistance","Course Completion Certificate"];
 

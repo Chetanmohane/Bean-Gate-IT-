@@ -940,27 +940,37 @@ const ReferralTab = () => {
   const addCode = async () => {
     const trimmed = newCode.trim().toUpperCase();
     if (!trimmed || codes.find((c) => c.code === trimmed)) return;
-    const newCodeObj = { code: trimmed, discount: "10%", active: true, created: new Date().toISOString().split("T")[0], uses: 0, creator: "admin" };
-    
+    const discPct = Number(newDiscountPercent) || 10;
+    const newCodeObj = {
+      code: trimmed,
+      discount: `${discPct}%`,
+      discountPercent: discPct,
+      applicablePlan: newApplicablePlan,
+      active: true,
+      created: new Date().toISOString().split("T")[0],
+      uses: 0,
+      creator: "admin"
+    };
+
     try {
       const res = await fetch("/api/refcodes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newCodeObj)
       });
-      if(res.ok) {
+      if (res.ok) {
         const saved = await res.json();
         setCodes([...codes, saved]);
       }
     } catch(err) { console.error(err); }
-    
+
     setNewCode("");
   };
 
   const toggleCode = async (idx: number) => {
     const codeObj = codes[idx];
     const id = (codeObj as any)._id;
-    if(!id) return;
+    if (!id) return;
 
     try {
       const res = await fetch(`/api/refcodes/${id}`, {
@@ -968,7 +978,7 @@ const ReferralTab = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: !codeObj.active })
       });
-      if(res.ok) {
+      if (res.ok) {
         const updated = await res.json();
         setCodes(codes.map((c, i) => i === idx ? updated : c));
       }
@@ -978,11 +988,11 @@ const ReferralTab = () => {
   const deleteCode = async (idx: number) => {
     const codeObj = codes[idx];
     const id = (codeObj as any)._id;
-    if(!id) {
+    if (!id) {
       setCodes(codes.filter((_, i) => i !== idx));
       return;
     }
-    
+
     try {
       await fetch(`/api/refcodes/${id}`, { method: "DELETE" });
       setCodes(codes.filter((_, i) => i !== idx));
@@ -998,21 +1008,52 @@ const ReferralTab = () => {
   return (
     <div>
       <h2 className="text-xl font-extrabold text-slate-900 dark:text-white mb-1">Referral Codes</h2>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 font-medium">Manage codes that students can use for 10% instant discount. Each code is single-use.</p>
+      <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 font-medium">Manage codes that students can use for instant discount. Each code is single-use.</p>
 
       {/* Add Code */}
       <Card className="p-6 mb-6">
-        <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold mb-3">Add New Code</p>
-        <div className="flex gap-3">
-          <input
-            type="text"
-            placeholder="e.g. SUMMER10"
-            value={newCode}
-            onChange={(e) => setNewCode(e.target.value.toUpperCase())}
-            className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-base outline-none focus:border-indigo-500 transition duration-200"
-          />
+        <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold mb-3">Add New Referral Code</p>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="md:col-span-2">
+            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Code Name</label>
+            <input
+              type="text"
+              placeholder="e.g. SUMMER10 or ONETIME20"
+              value={newCode}
+              onChange={(e) => setNewCode(e.target.value.toUpperCase())}
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Discount (%)</label>
+            <input
+              type="number"
+              min="1"
+              max="100"
+              value={newDiscountPercent}
+              onChange={(e) => setNewDiscountPercent(parseInt(e.target.value) || 10)}
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Target Plan</label>
+            <select
+              value={newApplicablePlan}
+              onChange={(e) => setNewApplicablePlan(e.target.value as any)}
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200 cursor-pointer"
+            >
+              <option value="all">All Plans</option>
+              <option value="one-time">One-Time Payment Only</option>
+              <option value="installment">Installment Plan Only</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="flex justify-end mt-4">
           <button onClick={addCode}
-            className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white text-sm font-bold rounded-xl transition duration-200 cursor-pointer border-none flex items-center gap-1.5 shadow-sm active:scale-[0.98]">
+            className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white text-sm font-bold rounded-xl transition duration-200 cursor-pointer border-none flex items-center gap-1.5 shadow-sm active:scale-[0.98]">
             <FaPlus className="text-xs" /> Add Code
           </button>
         </div>
@@ -1072,9 +1113,16 @@ const ReferralTab = () => {
       <div className="md:hidden space-y-4 mb-6">
         {filteredCodes.map((c, i) => {
           const idx = codes.findIndex(x => x.code === c.code);
+          const planLabel = c.applicablePlan === "one-time" ? "One-Time Only" : c.applicablePlan === "installment" ? "Installment Only" : "All Plans";
+          const planBadgeCls = c.applicablePlan === "one-time" 
+            ? "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border-amber-200 dark:border-amber-500/20"
+            : c.applicablePlan === "installment"
+            ? "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border-blue-200 dark:border-blue-500/20"
+            : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20";
+
           return (
             <Card key={i} className="p-5 space-y-3.5 border border-slate-100 dark:border-white/5">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-1.5">
                   <span className="font-extrabold text-slate-900 dark:text-white font-mono tracking-wider text-base">{c.code}</span>
                   <button onClick={() => copyCode(c.code)} className="text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 bg-transparent border-none cursor-pointer p-1.5 flex items-center justify-center">
@@ -1083,7 +1131,10 @@ const ReferralTab = () => {
                   {copied === c.code && <span className="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase">Copied!</span>}
                 </div>
                 
-                <span className="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-black px-2.5 py-1 rounded-full border border-indigo-100 dark:border-indigo-500/20">{c.discount} OFF</span>
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${planBadgeCls}`}>{planLabel}</span>
+                  <span className="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-black px-2.5 py-1 rounded-full border border-indigo-100 dark:border-indigo-500/20">{c.discountPercent ? `${c.discountPercent}%` : c.discount} OFF</span>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-xs border-t border-b border-slate-100 dark:border-white/5 py-3">
@@ -1125,6 +1176,7 @@ const ReferralTab = () => {
               <tr className="bg-slate-50/80 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
                 <th className="text-left px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Code</th>
                 <th className="text-left px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Discount</th>
+                <th className="text-left px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Target Plan</th>
                 <th className="text-left px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Creator</th>
                 <th className="text-left px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Created</th>
                 <th className="text-left px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
@@ -1132,39 +1184,51 @@ const ReferralTab = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredCodes.map((c, i) => (
-                <tr key={i} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/5 transition">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-slate-900 dark:text-white font-mono tracking-wider text-sm">{c.code}</span>
-                      <button onClick={() => copyCode(c.code)} className="text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 bg-transparent border-none cursor-pointer p-0 flex items-center">
-                        <FaCopy className="text-xs" />
+              {filteredCodes.map((c, i) => {
+                const planLabel = c.applicablePlan === "one-time" ? "One-Time Only" : c.applicablePlan === "installment" ? "Installment Only" : "All Plans";
+                const planBadgeCls = c.applicablePlan === "one-time" 
+                  ? "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border-amber-200 dark:border-amber-500/20"
+                  : c.applicablePlan === "installment"
+                  ? "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border-blue-200 dark:border-blue-500/20"
+                  : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20";
+
+                return (
+                  <tr key={i} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/5 transition">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-slate-900 dark:text-white font-mono tracking-wider text-sm">{c.code}</span>
+                        <button onClick={() => copyCode(c.code)} className="text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 bg-transparent border-none cursor-pointer p-0 flex items-center">
+                          <FaCopy className="text-xs" />
+                        </button>
+                        {copied === c.code && <span className="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase">Copied!</span>}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-2.5 py-1 rounded-full border border-indigo-100 dark:border-indigo-500/20">{c.discountPercent ? `${c.discountPercent}%` : c.discount} OFF</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${planBadgeCls}`}>{planLabel}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 font-mono">{c.creator || "admin"}</span>
+                    </td>
+                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300 text-sm font-medium">{c.created}</td>
+                    <td className="px-6 py-4">
+                      <button onClick={() => toggleCode(i)}
+                        className={`text-xs font-bold px-3 py-1.5 rounded-full border cursor-pointer transition duration-200 ${c.active && c.uses === 0 ? "bg-green-50 text-green-600 border-green-100 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20" : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-white/5 dark:text-slate-400 dark:border-white/10"}`}>
+                        {c.active && c.uses === 0 ? "Available" : c.uses > 0 ? "Used" : "Inactive"}
                       </button>
-                      {copied === c.code && <span className="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase">Copied!</span>}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-2.5 py-1 rounded-full border border-indigo-100 dark:border-indigo-500/20">{c.discount} OFF</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 font-mono">{c.creator || "admin"}</span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-600 dark:text-slate-300 text-sm font-medium">{c.created}</td>
-                  <td className="px-6 py-4">
-                    <button onClick={() => toggleCode(i)}
-                      className={`text-xs font-bold px-3 py-1.5 rounded-full border cursor-pointer transition duration-200 ${c.active && c.uses === 0 ? "bg-green-50 text-green-600 border-green-100 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20" : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-white/5 dark:text-slate-400 dark:border-white/10"}`}>
-                      {c.active && c.uses === 0 ? "Available" : c.uses > 0 ? "Used" : "Inactive"}
-                    </button>
-                  </td>
-                  <td className="px-6 py-4">
-                    <button onClick={() => deleteCode(i)} className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition bg-transparent border-none cursor-pointer p-1">
-                      <FaTrash className="text-sm" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-6 py-4">
+                      <button onClick={() => deleteCode(i)} className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition bg-transparent border-none cursor-pointer p-1">
+                        <FaTrash className="text-sm" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
               {filteredCodes.length === 0 && (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-400 dark:text-slate-500 text-sm font-semibold">No referral codes found.</td></tr>
+                <tr><td colSpan={7} className="px-6 py-8 text-center text-slate-400 dark:text-slate-500 text-sm font-semibold">No referral codes found.</td></tr>
               )}
             </tbody>
           </table>

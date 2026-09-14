@@ -120,10 +120,12 @@ const initializeDBData = async () => {
     if (refCodeCount === 0) {
       console.log('Creating default referral codes...');
       await RefCode.create([
-        { code: "BEANGATE10", discount: "10%", active: true, created: "2024-07-01", uses: 0, creator: "admin" },
-        { code: "MERN10", discount: "10%", active: true, created: "2024-07-01", uses: 0, creator: "admin" },
-        { code: "REF10", discount: "10%", active: true, created: "2024-07-01", uses: 0, creator: "admin" }
+        { code: "BEANGATE10", discount: "10%", discountPercent: 10, applicablePlan: "all", active: true, created: "2024-07-01", uses: 0, creator: "admin" },
+        { code: "MERN10", discount: "10%", discountPercent: 10, applicablePlan: "all", active: true, created: "2024-07-01", uses: 0, creator: "admin" },
+        { code: "REF10", discount: "10%", discountPercent: 10, applicablePlan: "all", active: true, created: "2024-07-01", uses: 0, creator: "admin" }
       ]);
+    } else {
+      await RefCode.updateMany({ applicablePlan: { $exists: false } }, { $set: { applicablePlan: "all", discountPercent: 10 } });
     }
     dbInitialized = true;
   } catch (err) {
