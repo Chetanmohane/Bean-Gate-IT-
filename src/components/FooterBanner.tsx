@@ -5,6 +5,8 @@ import { usePlanConfig } from "../utils/planConfig";
 const DEFAULT_BANNER_PHONE = "+91 74711 12020";
 
 const FooterBanner = () => {
+  const cfg = usePlanConfig();
+  const priceFormatted = (cfg.oneTimePrice ?? 6000).toLocaleString("en-IN");
   const [phone, setPhone] = useState(DEFAULT_BANNER_PHONE);
   const [email, setEmail] = useState("info@beangates.com");
 
