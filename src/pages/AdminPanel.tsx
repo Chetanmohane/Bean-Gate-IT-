@@ -3506,13 +3506,20 @@ const AdminPanel = () => {
       transactionId: dueForm.transactionId,
       timestamp
     };
+
+    setPayments(prev => [newPay, ...prev]);
     try {
-      await fetch("/api/payments", {
+      const res = await fetch("/api/payments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newPay)
       });
-      fetchRegistrationsAndPayments();
+      if (res.ok) {
+        const saved = await res.json();
+        if (saved && saved._id) {
+          setPayments(prev => prev.map(p => p === newPay ? saved : p));
+        }
+      }
     } catch (e) { console.error(e); }
     setIsDueModalOpen(false);
     setDueForm({ name: "", email: "", phone: "", course: "", planTitle: "2nd Installment", amount: "3200", transactionId: "" });
@@ -3595,20 +3602,36 @@ const AdminPanel = () => {
       };
     }
 
+    setRegistrations(prev => [newReg, ...prev]);
+    if (newPay) {
+      setPayments(prev => [newPay, ...prev]);
+    }
+
     try {
-      await fetch("/api/registrations", {
+      const regRes = await fetch("/api/registrations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newReg)
       });
+      if (regRes.ok) {
+        const savedReg = await regRes.json();
+        if (savedReg && savedReg._id) {
+          setRegistrations(prev => prev.map(r => r === newReg ? savedReg : r));
+        }
+      }
       if (newPay) {
-        await fetch("/api/payments", {
+        const payRes = await fetch("/api/payments", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(newPay)
         });
+        if (payRes.ok) {
+          const savedPay = await payRes.json();
+          if (savedPay && savedPay._id) {
+            setPayments(prev => prev.map(p => p === newPay ? savedPay : p));
+          }
+        }
       }
-      fetchRegistrationsAndPayments();
     } catch (e) { console.error(e); }
 
     setIsModalOpen(false);
