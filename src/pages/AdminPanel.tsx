@@ -1355,26 +1355,57 @@ const ReferralTab = () => {
   const [codes, setCodes] = useState<RefCode[]>([]);
 
   useEffect(() => {
-    fetch("/api/refcodes")
-      .then(async res => {
-        if (!res.ok) throw new Error("Server returned " + res.status);
-        const data = await res.json();
-        if (Array.isArray(data)) return data;
-        throw new Error("Invalid format");
-      })
-      .then(data => setCodes(data))
-      .catch(e => {
-        console.warn("Falling back to local storage for ref codes...", e);
-        try {
-          const stored = localStorage.getItem("bg_ref_codes");
-          if (stored) setCodes(JSON.parse(stored));
-          else setCodes([
-            { code: "BEANGATE10", discount: "10%", active: true, created: "2024-07-01", uses: 0 },
-            { code: "MERN10",     discount: "10%", active: true, created: "2024-07-01", uses: 0 },
-            { code: "REF10",      discount: "10%", active: true, created: "2024-07-01", uses: 0 },
-          ]);
-        } catch {}
-      });
+    const fetchCodes = async () => {
+      let serverData: RefCode[] = [];
+      try {
+        const res = await fetch("/api/refcodes");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) serverData = data;
+        }
+      } catch (e) {}
+
+      let localData: RefCode[] = [];
+      try {
+        const stored = localStorage.getItem("bg_ref_codes");
+        if (stored) localData = JSON.parse(stored);
+      } catch (e) {}
+
+      let deletedCodes: any[] = [];
+      try {
+        deletedCodes = JSON.parse(localStorage.getItem("bg_deleted_codes") || "[]");
+      } catch(e) {}
+
+      const isCodeDeleted = (c: RefCode) => {
+        return deletedCodes.some(d => 
+          (d.id && ((c as any)._id === d.id || (c as any).id === d.id)) ||
+          (d.code && c.code && c.code.trim().toUpperCase() === d.code.trim().toUpperCase())
+        );
+      };
+
+      const defaultFallback: RefCode[] = [
+        { code: "BEANGATE10", discount: "10%", discountPercent: 10, applicablePlan: "all", active: true, created: "2024-07-01", uses: 0, creator: "admin" },
+        { code: "MERN10",     discount: "10%", discountPercent: 10, applicablePlan: "all", active: true, created: "2024-07-01", uses: 0, creator: "admin" },
+        { code: "REF10",      discount: "10%", discountPercent: 10, applicablePlan: "all", active: true, created: "2024-07-01", uses: 0, creator: "admin" },
+      ];
+
+      const combined = [...serverData.filter(c => !isCodeDeleted(c))];
+      for (const lc of localData.filter(c => !isCodeDeleted(c))) {
+        const exists = combined.some(c => 
+          ((c as any)._id && (lc as any)._id && (c as any)._id === (lc as any)._id) ||
+          (c.code && lc.code && c.code.trim().toUpperCase() === lc.code.trim().toUpperCase())
+        );
+        if (!exists) combined.push(lc);
+      }
+
+      const finalCodes = (combined.length > 0 ? combined : defaultFallback).filter(c => !isCodeDeleted(c));
+      setCodes(finalCodes);
+      try {
+        localStorage.setItem("bg_ref_codes", JSON.stringify(finalCodes));
+      } catch (e) {}
+    };
+
+    fetchCodes();
   }, []);
   const [newCode, setNewCode] = useState("");
   const [newDiscountPercent, setNewDiscountPercent] = useState<number>(10);
@@ -1384,6 +1415,15 @@ const ReferralTab = () => {
   const [filterStatus, setFilterStatus] = useState("All");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
+  const generateRandomCode = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let rand = "";
+    for (let i = 0; i < 4; i++) {
+      rand += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewCode("BEANGATE" + rand);
+  };
 
   const filteredCodes = codes.filter(c => {
     const matchesSearch = c.code.toLowerCase().includes(search.toLowerCase()) || 
@@ -1441,9 +1481,16 @@ const ReferralTab = () => {
 
   const addCode = async () => {
     const trimmed = newCode.trim().toUpperCase();
-    if (!trimmed || codes.find((c) => c.code === trimmed)) return;
+    if (!trimmed) {
+      alert("Please enter a referral code name.");
+      return;
+    }
+    if (codes.some(c => c.code.trim().toUpperCase() === trimmed)) {
+      alert("Referral code already exists.");
+      return;
+    }
     const discPct = Number(newDiscountPercent) || 10;
-    const newCodeObj = {
+    const newCodeObj: RefCode = {
       code: trimmed,
       discount: `${discPct}%`,
       discountPercent: discPct,
@@ -1903,16 +1950,50 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
   const [deleteConfirmIdx, setDeleteConfirmIdx] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch("/api/subadmins")
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) setSubadmins(data);
-      })
-      .catch(e => {
-        console.warn("Falling back to local storage for subadmins...", e);
+    const fetchSubadmins = async () => {
+      let serverSubs: any[] = [];
+      try {
+        const res = await fetch("/api/subadmins");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) serverSubs = data;
+        }
+      } catch (e) {}
+
+      let localSubs: any[] = [];
+      try {
         const stored = localStorage.getItem("bg_subadmins");
-        if (stored) setSubadmins(JSON.parse(stored));
-      });
+        if (stored) localSubs = JSON.parse(stored);
+      } catch (e) {}
+
+      let deletedSubs: any[] = [];
+      try {
+        deletedSubs = JSON.parse(localStorage.getItem("bg_deleted_subs") || "[]");
+      } catch (e) {}
+
+      const isSubDeleted = (s: any) => {
+        return deletedSubs.some(d => 
+          (d.id && ((s._id && s._id === d.id) || (s.id && s.id === d.id))) ||
+          (d.username && s.username && s.username.toLowerCase() === d.username.toLowerCase())
+        );
+      };
+
+      const combined = [...serverSubs.filter(s => !isSubDeleted(s))];
+      for (const ls of localSubs.filter(s => !isSubDeleted(s))) {
+        const exists = combined.some(s => 
+          (s._id && ls._id && s._id === ls._id) || 
+          (s.username && ls.username && s.username.toLowerCase() === ls.username.toLowerCase())
+        );
+        if (!exists) combined.push(ls);
+      }
+
+      setSubadmins(combined);
+      try {
+        localStorage.setItem("bg_subadmins", JSON.stringify(combined));
+      } catch(e){}
+    };
+
+    fetchSubadmins();
   }, []);
 
   // Get all referral codes created by a sub-admin
@@ -1921,14 +2002,19 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
       const stored = localStorage.getItem("bg_ref_codes");
       if (!stored) return [];
       const allCodes: RefCode[] = JSON.parse(stored);
-      return allCodes.filter(c => c.creator && c.creator.toLowerCase() === username.toLowerCase());
+      const cleanUser = username.trim().toLowerCase();
+      return allCodes.filter(c => 
+        (c.creator && c.creator.toLowerCase() === cleanUser) ||
+        (c.code && c.code.toLowerCase().includes(cleanUser))
+      );
     } catch { return []; }
   };
 
   // Get students referred by a sub-admin (students who used their referral codes)
   const getReferredStudents = (username: string) => {
     const codes = getSubadminCodes(username).map(c => c.code.trim().toUpperCase());
-    if (codes.length === 0) return { referredRegs: [] as Registration[], referredPays: [] as Payment[] };
+    const userDefaultCode = (username.trim() + "10").toUpperCase();
+    if (!codes.includes(userDefaultCode)) codes.push(userDefaultCode);
 
     const referredRegs = registrations.filter(
       r => r.referralCode && codes.includes(r.referralCode.trim().toUpperCase())
@@ -1955,6 +2041,12 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
         return;
       }
       const updatedData = { name: name.trim(), username: username.trim(), password: password.trim(), referralCode: finalRefCode };
+      const updatedList = subadmins.map(s => (s._id === editingId || s.id === editingId) ? { ...s, ...updatedData } : s);
+      setSubadmins(updatedList);
+      try {
+        localStorage.setItem("bg_subadmins", JSON.stringify(updatedList));
+      } catch(e){}
+
       try {
         const res = await fetch(`/api/subadmins/${editingId}`, {
           method: "PUT",
@@ -1963,7 +2055,7 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
         });
         if(res.ok) {
           const updatedServer = await res.json();
-          setSubadmins(subadmins.map(s => (s._id === editingId || s.id === editingId) ? updatedServer : s));
+          setSubadmins(prev => prev.map(s => (s._id === editingId || s.id === editingId) ? updatedServer : s));
         }
       } catch (err) {
         console.error(err);
@@ -1975,6 +2067,7 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
         return;
       }
       const newSub = {
+        id: "sub_" + Date.now(),
         name: name.trim(),
         username: username.trim(),
         password: password.trim(),
@@ -1982,6 +2075,40 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
         status: "Active",
         createdDate: new Date().toISOString().split("T")[0]
       };
+
+      // 1. Save SubAdmin locally & in state
+      const updatedList = [...subadmins, newSub];
+      setSubadmins(updatedList);
+      try {
+        localStorage.setItem("bg_subadmins", JSON.stringify(updatedList));
+      } catch(e){}
+
+      // 2. Auto-create & register referral code for this SubAdmin in local storage & DB
+      try {
+        const storedCodesStr = localStorage.getItem("bg_ref_codes") || "[]";
+        const storedCodes: RefCode[] = JSON.parse(storedCodesStr);
+        if (!storedCodes.some(c => c.code.trim().toUpperCase() === finalRefCode)) {
+          const autoCodeObj: RefCode = {
+            code: finalRefCode,
+            discount: "10%",
+            discountPercent: 10,
+            applicablePlan: "all",
+            active: true,
+            created: new Date().toISOString().split("T")[0],
+            uses: 0,
+            creator: username.trim()
+          };
+          const updatedRefCodes = [...storedCodes, autoCodeObj];
+          localStorage.setItem("bg_ref_codes", JSON.stringify(updatedRefCodes));
+          fetch("/api/refcodes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(autoCodeObj)
+          }).catch(() => {});
+        }
+      } catch(e){}
+
+      // 3. Post to subadmins API endpoint
       try {
         const res = await fetch(`/api/subadmins`, {
           method: "POST",
@@ -1990,7 +2117,7 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
         });
         if(res.ok) {
           const saved = await res.json();
-          setSubadmins([...subadmins, saved]);
+          setSubadmins(prev => prev.map(s => s.username === newSub.username ? saved : s));
         }
       } catch(err) {
         console.error(err);
