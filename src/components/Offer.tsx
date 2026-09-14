@@ -284,8 +284,12 @@ const Offer = ({
     });
   };
 
-  const basePrice = cfg.oneTimePrice;
-  const currentPrice = appliedDiscount ? Math.round(basePrice * (1 - cfg.discountPercent / 100)) : basePrice;
+  const oneTimeDiscPct = cfg.oneTimeDiscountPercent ?? cfg.discountPercent ?? 10;
+  const inst1DiscPct = cfg.installment1DiscountPercent ?? cfg.discountPercent ?? 10;
+  const selectedDiscPct = formData.plan === 'inst-1' ? inst1DiscPct : oneTimeDiscPct;
+
+  const basePrice = formData.plan === 'inst-1' ? cfg.installment1Price : cfg.oneTimePrice;
+  const currentPrice = appliedDiscount ? Math.round(basePrice * (1 - selectedDiscPct / 100)) : basePrice;
   const saveAmount = cfg.oneTimeOriginalPrice - currentPrice;
   const savePercent = Math.round((saveAmount / cfg.oneTimeOriginalPrice) * 100);
 
@@ -478,15 +482,15 @@ const Offer = ({
                   onChange={handleChange}
                   className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none"
                 >
-                  <option value="one-time">One-Time Payment Plan ({appliedDiscount ? `₹${Math.round(cfg.oneTimePrice * (1 - cfg.discountPercent / 100)).toLocaleString("en-IN")}` : `₹${cfg.oneTimePrice.toLocaleString("en-IN")}`})</option>
-                  <option value="inst-1">Flexible Installment Plan ({appliedDiscount ? `₹${Math.round(cfg.installment1Price * (1 - cfg.discountPercent / 100)).toLocaleString("en-IN")}` : `₹${cfg.installment1Price.toLocaleString("en-IN")}`})</option>
+                  <option value="one-time">One-Time Payment Plan ({appliedDiscount ? `₹${Math.round(cfg.oneTimePrice * (1 - oneTimeDiscPct / 100)).toLocaleString("en-IN")}` : `₹${cfg.oneTimePrice.toLocaleString("en-IN")}`})</option>
+                  <option value="inst-1">Flexible Installment Plan ({appliedDiscount ? `₹${Math.round(cfg.installment1Price * (1 - inst1DiscPct / 100)).toLocaleString("en-IN")}` : `₹${cfg.installment1Price.toLocaleString("en-IN")}`})</option>
                 </select>
               </div>
 
               {/* Referral Code Field */}
               <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 text-left">
                 <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-500 mb-1.5">
-                  Referral Code (Optional) - Save {cfg.discountPercent}% Instantly
+                  Referral Code (Optional) - Save Extra Instantly
                 </label>
                 <div className="flex gap-2">
                   <input

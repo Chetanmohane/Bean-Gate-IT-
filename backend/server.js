@@ -40,6 +40,9 @@ const initializeDBData = async () => {
         installment1Price: 3200,
         installment2Price: 3200,
         discountPercent: 10,
+        oneTimeDiscountPercent: 10,
+        installment1DiscountPercent: 10,
+        installment2DiscountPercent: 10,
         oneTimeFeatures: [
           "Full MERN Stack Course Access",
           "Practical Hands-on Training",
@@ -91,6 +94,18 @@ const initializeDBData = async () => {
         if (existing.manualSeatsOffsetRegistrationsCount === undefined) {
           const regCount = await Registration.countDocuments();
           existing.manualSeatsOffsetRegistrationsCount = regCount;
+          updated = true;
+        }
+        if (existing.oneTimeDiscountPercent === undefined) {
+          existing.oneTimeDiscountPercent = existing.discountPercent ?? 10;
+          updated = true;
+        }
+        if (existing.installment1DiscountPercent === undefined) {
+          existing.installment1DiscountPercent = existing.discountPercent ?? 10;
+          updated = true;
+        }
+        if (existing.installment2DiscountPercent === undefined) {
+          existing.installment2DiscountPercent = existing.discountPercent ?? 10;
           updated = true;
         }
         if (updated) {
@@ -242,22 +257,43 @@ app.get('/api/planconfig', async (req, res) => {
   } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
-app.put('/api/planconfig/:id', async (req, res) => {
+app.post('/api/planconfig', async (req, res) => {
   try {
-    const current = await PlanConfig.findById(req.params.id);
-    if (current) {
-      const bodyOffset = req.body.manualSeatsOffset !== undefined ? Number(req.body.manualSeatsOffset) : undefined;
-      const bodyCapacity = req.body.totalSeats !== undefined ? Number(req.body.totalSeats) : undefined;
-      const offsetChanged = bodyOffset !== undefined && bodyOffset !== current.manualSeatsOffset;
-      const capacityChanged = bodyCapacity !== undefined && bodyCapacity !== current.totalSeats;
-      if (offsetChanged || capacityChanged || current.manualSeatsOffsetRegistrationsCount === undefined) {
-        req.body.seatsOffsetUpdatedAt = new Date();
-        const regCount = await Registration.countDocuments();
-        req.body.manualSeatsOffsetRegistrationsCount = regCount;
-      }
+    const existing = await PlanConfig.findOne();
+    if (existing) {
+      const updated = await PlanConfig.findByIdAndUpdate(existing._id, req.body, { new: true });
+      return res.json(updated);
     }
-    const updated = await PlanConfig.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.json(updated);
+    const saved = await PlanConfig.create(req.body);
+    res.status(201).json(saved);
+  } catch (error) { res.status(400).json({ message: error.message }); }
+});
+
+app.put('/api/planconfig/:id?', async (req, res) => {
+  try {
+    let targetId = req.params.id;
+    if (!targetId) {
+      const existing = await PlanConfig.findOne();
+      if (existing) targetId = existing._id;
+    }
+    if (targetId) {
+      const current = await PlanConfig.findById(targetId);
+      if (current) {
+        const bodyOffset = req.body.manualSeatsOffset !== undefined ? Number(req.body.manualSeatsOffset) : undefined;
+        const bodyCapacity = req.body.totalSeats !== undefined ? Number(req.body.totalSeats) : undefined;
+        const offsetChanged = bodyOffset !== undefined && bodyOffset !== current.manualSeatsOffset;
+        const capacityChanged = bodyCapacity !== undefined && bodyCapacity !== current.totalSeats;
+        if (offsetChanged || capacityChanged || current.manualSeatsOffsetRegistrationsCount === undefined) {
+          req.body.seatsOffsetUpdatedAt = new Date();
+          const regCount = await Registration.countDocuments();
+          req.body.manualSeatsOffsetRegistrationsCount = regCount;
+        }
+      }
+      const updated = await PlanConfig.findByIdAndUpdate(targetId, req.body, { new: true, upsert: true });
+      return res.json(updated);
+    }
+    const created = await PlanConfig.create(req.body);
+    res.json(created);
   } catch (error) { res.status(400).json({ message: error.message }); }
 });
 

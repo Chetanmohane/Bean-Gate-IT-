@@ -1,130 +1,108 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { FaUsers, FaShoppingCart, FaLock, FaTachometerAlt, FaDatabase } from 'react-icons/fa';
-import { FaHtml5, FaCss3Alt, FaJs, FaReact, FaNodeJs, FaServer, FaRocket, FaRss } from 'react-icons/fa';
+import React from "react";
+import { FaTachometerAlt, FaShoppingCart, FaTasks, FaUniversity, FaBuilding } from "react-icons/fa";
 
 const Projects = () => {
-  const steps = [
-    { num: 1, title: "HTML5", icon: <FaHtml5 className="text-3xl text-[#E34F26]" /> },
-    { num: 2, title: "CSS3", icon: <FaCss3Alt className="text-3xl text-[#1572B6]" /> },
-    {
-      num: 3,
-      title: "JavaScript (ES6+)",
-      icon: <FaJs className="text-3xl text-[#F7DF1E]" />
-    },
-    { num: 4, title: "React.js", icon: <FaReact className="text-3xl text-[#61DAFB]" /> },
-    { num: 5, title: "Node.js", icon: <FaNodeJs className="text-3xl text-[#339933]" /> },
-    {
-      num: 6,
-      title: "Express.js",
-      icon: <div className="text-2xl font-bold text-gray-500 font-sans tracking-tight">ex</div>
-    },
-    {
-      num: 7,
-      title: "MongoDB",
-      icon: <div className="text-3xl text-[#47A248] font-bold"><span className="text-emerald-500">🍃</span></div>
-    },
-    { num: 8, title: "Authentication (JWT)", icon: <FaLock className="text-2xl text-purple-600" /> },
-    { num: 9, title: "REST API", icon: <FaServer className="text-2xl text-pink-500" /> },
-    { num: 10, title: "Deploy Live Project", icon: <FaRocket className="text-2xl text-blue-500" /> },
-  ];
-
   const projects = [
-    { title: "Student Management System", icon: <FaUsers className="text-[#1a66ff] text-3xl mb-3" /> },
-    { title: "E-Commerce Website", icon: <FaShoppingCart className="text-[#eab308] text-3xl mb-3" /> },
-    { title: "Authentication System", icon: <FaLock className="text-[#1a66ff] text-3xl mb-3" /> },
-    { title: "Admin Dashboard", icon: <FaTachometerAlt className="text-[#64748b] text-3xl mb-3" /> },
-    { title: "Blog Website", icon: <FaRss className="text-[#1a66ff] text-3xl mb-3" /> },
-    { title: "Full Stack MERN Project", icon: <FaDatabase className="text-[#22c55e] text-3xl mb-3" /> },
+    {
+      title: "Admin Dashboard Management System",
+      icon: <FaTachometerAlt className="text-blue-500 text-3xl" />,
+      tag: "Analytics & Control",
+      bgColor: "bg-blue-950/40 border-blue-500/20",
+    },
+    {
+      title: "E-Commerce Web Application",
+      icon: <FaShoppingCart className="text-emerald-500 text-3xl" />,
+      tag: "Store & Cart",
+      bgColor: "bg-emerald-950/40 border-emerald-500/20",
+    },
+    {
+      title: "Task Manager Application",
+      icon: <FaTasks className="text-purple-500 text-3xl" />,
+      tag: "Productivity",
+      bgColor: "bg-purple-950/40 border-purple-500/20",
+    },
+    {
+      title: "School Management System",
+      icon: <FaUniversity className="text-amber-500 text-3xl" />,
+      tag: "Academic System",
+      bgColor: "bg-amber-950/40 border-amber-500/20",
+    },
+    {
+      title: "Other Industry Based Projects",
+      icon: <FaBuilding className="text-cyan-500 text-3xl" />,
+      tag: "Commercial Build",
+      bgColor: "bg-cyan-950/40 border-cyan-500/20",
+    },
   ];
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.08
-      }
+  const scrollToRegister = () => {
+    const el = document.getElementById("register") || document.getElementById("pricing");
+    if (el) {
+      const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
+      window.scrollTo({ top: y, behavior: "smooth" });
     }
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, scale: 0.9, y: 15 },
-    visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
-  };
-
   return (
-    <section className="py-20 bg-white overflow-hidden border-t border-gray-100">
+    <section id="projects" className="py-16 sm:py-20 bg-white text-gray-900 border-b border-gray-100">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col lg:flex-row gap-12 lg:gap-16 items-start">
-
-          {/* ================= Left: Course Roadmap ================= */}
-          <div className="w-full lg:w-[48%] text-left">
-            <h2 className="text-2xl sm:text-3xl font-black text-[#1a66ff] uppercase tracking-wide mb-8">
-              Course Roadmap
+        
+        <div className="grid lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+          
+          {/* LEFT: Text Block & CTA */}
+          <div className="lg:col-span-4 text-left space-y-6">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 tracking-tight leading-tight">
+              Learn By Building Real-World Projects
             </h2>
 
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.2 }}
-              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8"
+            <p className="text-gray-600 text-sm sm:text-base leading-relaxed font-medium">
+              Work on real projects and build industry-ready applications.
+            </p>
+
+            <button
+              onClick={scrollToRegister}
+              className="px-8 py-3.5 bg-slate-900 hover:bg-orange-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-colors duration-300 shadow-md cursor-pointer border-none"
             >
-              {steps.map((step, index) => (
-                <motion.div variants={itemVariants} key={index} className="flex flex-col items-center">
-                  
-                  {/* Step Card Circle */}
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full shadow-lg border border-gray-150 flex items-center justify-center relative hover:scale-105 transition-transform duration-300">
-                    {step.icon}
-
-                    {/* Step Number Badge */}
-                    <div className="absolute -bottom-1.5 w-6 h-6 bg-orange-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow">
-                      {step.num}
-                    </div>
-                  </div>
-
-                  {/* Step Label */}
-                  <h3 className="font-extrabold text-gray-700 text-center text-xs mt-3.5 leading-snug">
-                    {step.title}
-                  </h3>
-
-                </motion.div>
-              ))}
-            </motion.div>
+              SEE PROJECTS
+            </button>
           </div>
 
-          {/* ================= Right: Projects You Will Build ================= */}
-          <div className="w-full lg:w-[52%] text-left">
-            <h2 className="text-2xl sm:text-3xl font-black text-[#1a66ff] uppercase tracking-wide mb-8">
-              Projects You Will Build
-            </h2>
+          {/* RIGHT: 5 Project Preview Cards Grid */}
+          <div className="lg:col-span-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {projects.map((project, idx) => (
+              <div
+                key={idx}
+                className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between group h-48"
+              >
+                {/* Mock Visual Thumbnail Header inside card */}
+                <div className="w-full h-24 rounded-xl bg-slate-900 p-3 flex flex-col justify-between relative overflow-hidden group-hover:scale-[1.02] transition-transform">
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-1">
+                      <span className="w-2 h-2 rounded-full bg-red-400"></span>
+                      <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
+                      <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                    </div>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest bg-white/10 px-2 py-0.5 rounded">
+                      {project.tag}
+                    </span>
+                  </div>
 
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.2 }}
-              className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-            >
-              {projects.map((project, index) => (
-                <motion.div
-                  key={index}
-                  variants={itemVariants}
-                  whileHover={{ y: -4 }}
-                  className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100/90 p-5 flex flex-col items-center justify-center text-center hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] transition-all duration-300 min-h-[140px]"
-                >
-                  {project.icon}
+                  <div className="flex items-center gap-3">
+                    {project.icon}
+                    <span className="text-[10px] font-mono text-gray-300">Live Demo</span>
+                  </div>
+                </div>
 
-                  <h3 className="font-extrabold text-gray-800 text-xs sm:text-sm leading-snug">
-                    {project.title}
-                  </h3>
-                </motion.div>
-              ))}
-            </motion.div>
+                {/* Card Title */}
+                <h3 className="font-extrabold text-gray-900 text-xs sm:text-sm mt-3 leading-snug">
+                  {project.title}
+                </h3>
+              </div>
+            ))}
           </div>
 
         </div>
+
       </div>
     </section>
   );

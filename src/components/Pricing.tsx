@@ -96,14 +96,14 @@ const Pricing = ({
         setAppliedDiscount(false);
       } else {
         setAppliedDiscount(true);
-        setPromoSuccess("Referral code applied! 10% Discount saved.");
+        setPromoSuccess("Referral code applied! Discount saved.");
         setPromoError("");
       }
     } else {
       const isFallbackDefault = ["BEANGATE10", "REF10", "MERN10"].includes(inputCode);
       if (isFallbackDefault) {
         setAppliedDiscount(true);
-        setPromoSuccess("Referral code applied! 10% Discount saved.");
+        setPromoSuccess("Referral code applied! Discount saved.");
         setPromoError("");
       } else {
         setPromoError("Invalid referral code.");
@@ -126,20 +126,23 @@ const Pricing = ({
   const inst1Price     = adminCfg?.installment1Price    ?? 3200;
   const inst2Price     = adminCfg?.installment2Price    ?? 3200;
   const discPct        = adminCfg?.discountPercent      ?? 10;
-  const oneTimeFeats   = adminCfg?.oneTimeFeatures      ?? ["Full MERN Stack Course Access","Practical Hands-on Training","100% Placement Assistance","Course Completion Certificate","Save 10% Extra using Referral Codes"];
+  const oneTimeDiscPct = adminCfg?.oneTimeDiscountPercent ?? discPct;
+  const inst1DiscPct    = adminCfg?.installment1DiscountPercent ?? discPct;
+  const inst2DiscPct    = adminCfg?.installment2DiscountPercent ?? discPct;
+  const oneTimeFeats   = adminCfg?.oneTimeFeatures      ?? ["Full MERN Stack Course Access","Practical Hands-on Training","100% Placement Assistance","Course Completion Certificate","Save Extra using Referral Codes"];
   const instFeats      = adminCfg?.installmentFeatures  ?? ["Full MERN Stack Course Access","Practical Hands-on Training","100% Placement Assistance","Course Completion Certificate"];
 
   const fmt = (n: number) => "₹" + n.toLocaleString("en-IN");
-  const disc = (n: number) => Math.round(n * (1 - discPct / 100));
+  const disc = (n: number, pct: number) => Math.round(n * (1 - pct / 100));
 
   const plans = [
     {
       id: "one-time",
       title: "One-Time Payment Plan",
-      price: appliedDiscount ? fmt(disc(oneTimePrice)) : fmt(oneTimePrice),
+      price: appliedDiscount ? fmt(disc(oneTimePrice, oneTimeDiscPct)) : fmt(oneTimePrice),
       originalPrice: fmt(originalPrice),
       description: "Pay the full course fee upfront and get a flat discount.",
-      badge: appliedDiscount ? `${discPct}% Code Applied` : "Best Value",
+      badge: appliedDiscount ? `${oneTimeDiscPct}% Code Applied` : "Best Value",
       badgeColor: appliedDiscount ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-orange-500/10 text-orange-400 border-orange-500/20",
       cardStyle: "from-[#121f3d]/90 to-[#081021]/90 border-orange-500/25 hover:border-orange-500/60 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)]",
       titleColor: "group-hover:text-orange-400",
@@ -151,20 +154,20 @@ const Pricing = ({
     {
       id: "inst-1",
       title: "Flexible Installment Plan",
-      price: appliedDiscount ? fmt(disc(inst1Price)) : fmt(inst1Price),
+      price: appliedDiscount ? fmt(disc(inst1Price, inst1DiscPct)) : fmt(inst1Price),
       originalPrice: null,
       description: "Pay in easy monthly installments while learning.",
-      badge: "Most Flexible",
-      badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+      badge: appliedDiscount ? `${inst1DiscPct}% Code Applied` : "Most Flexible",
+      badgeColor: appliedDiscount ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-blue-500/10 text-blue-400 border-blue-500/20",
       cardStyle: "from-[#121f3d]/90 to-[#081021]/90 border-blue-500/25 hover:border-blue-500/60 hover:shadow-[0_0_30px_rgba(59,130,246,0.15)]",
       titleColor: "group-hover:text-blue-400",
       iconColor: "text-blue-400",
       features: [
         appliedDiscount
-          ? `1st Installment: ${fmt(disc(inst1Price))} (Pay now to start)`
+          ? `1st Installment: ${fmt(disc(inst1Price, inst1DiscPct))} (${inst1DiscPct}% OFF)`
           : `1st Installment: ${fmt(inst1Price)} (Pay now to start)`,
         appliedDiscount
-          ? `2nd Installment: ${fmt(disc(inst2Price))} (Pay after 30 days)`
+          ? `2nd Installment: ${fmt(disc(inst2Price, inst2DiscPct))} (${inst2DiscPct}% OFF)`
           : `2nd Installment: ${fmt(inst2Price)} (Pay after 30 days)`,
         ...instFeats,
       ],
@@ -308,8 +311,8 @@ const Pricing = ({
                   <span className="text-[10px] text-orange-400 font-extrabold tracking-wide uppercase">
                     + 18% GST (Total: {(() => {
                       const baseAmt = plan.id === "one-time" 
-                        ? (appliedDiscount ? disc(oneTimePrice) : oneTimePrice)
-                        : (appliedDiscount ? disc(inst1Price) : inst1Price);
+                        ? (appliedDiscount ? disc(oneTimePrice, oneTimeDiscPct) : oneTimePrice)
+                        : (appliedDiscount ? disc(inst1Price, inst1DiscPct) : inst1Price);
                       const totalWithGST = Math.round(baseAmt * 1.18);
                       return fmt(totalWithGST);
                     })()})

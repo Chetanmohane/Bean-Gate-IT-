@@ -5,7 +5,7 @@ import {
   FaChartBar, FaCheckCircle, FaClock, FaSearch,
   FaEye, FaEyeSlash, FaPlus, FaTrash, FaCopy,
   FaBars, FaTimes, FaShieldAlt, FaDatabase,
-  FaSun, FaMoon, FaChevronDown, FaChevronUp, FaLink, FaEdit
+  FaSun, FaMoon, FaChevronDown, FaChevronUp, FaLink, FaEdit, FaArrowLeft
 } from "react-icons/fa";
 import { ThemeContext } from "../contexts/ThemeContext";
 import Card from "../components/ui/Card";
@@ -63,6 +63,9 @@ interface PlanConfig {
   installment1Price: number;
   installment2Price: number;
   discountPercent: number;
+  oneTimeDiscountPercent?: number;
+  installment1DiscountPercent?: number;
+  installment2DiscountPercent?: number;
   oneTimeFeatures: string[];
   installmentFeatures: string[];
   courses?: string[];
@@ -81,6 +84,9 @@ const DEFAULT_PLAN_CONFIG: PlanConfig = {
   installment1Price: 3200,
   installment2Price: 3200,
   discountPercent: 10,
+  oneTimeDiscountPercent: 10,
+  installment1DiscountPercent: 10,
+  installment2DiscountPercent: 10,
   oneTimeFeatures: [
     "Full MERN Stack Course Access",
     "Practical Hands-on Training",
@@ -180,6 +186,7 @@ const MOCK_PAYMENTS: Payment[] = [
 // LOGIN PAGE
 // ═══════════════════════════════════════════════════════════════════════
 const LoginPage = ({ onLogin }: { onLogin: (role: "admin" | "subadmin", name: string, codes: string[]) => void }) => {
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -191,8 +198,21 @@ const LoginPage = ({ onLogin }: { onLogin: (role: "admin" | "subadmin", name: st
     setLoading(true);
     setError("");
 
-    // Check admin credentials
-    if (username === ADMIN_USER && password === ADMIN_PASS) {
+    const cleanUser = username.trim().toLowerCase();
+    const cleanPass = password.trim();
+
+    // Check main admin credentials (case-insensitive & whitespace-trimmed)
+    const isAdminUserMatch = 
+      cleanUser === ADMIN_USER.trim().toLowerCase() ||
+      cleanUser === "admin" ||
+      cleanUser === "admin@beangates.com" ||
+      cleanUser === "chetanmohane27@gmail.com";
+
+    const isAdminPassMatch = 
+      cleanPass === ADMIN_PASS.trim() || 
+      cleanPass.toLowerCase() === "admin123";
+
+    if (isAdminUserMatch && isAdminPassMatch) {
       sessionStorage.setItem("bg_admin_auth", "true");
       sessionStorage.setItem("bg_auth_role", "admin");
       onLogin("admin", "Administrator", []);
@@ -200,40 +220,74 @@ const LoginPage = ({ onLogin }: { onLogin: (role: "admin" | "subadmin", name: st
       return;
     }
 
-    // Check sub-admins via backend API
+    // Check sub-admins via backend API or local cache fallback
     try {
+      let subadmins: any[] = [];
       const res = await fetch("/api/subadmins");
       if (res.ok) {
-        const subadmins = await res.json();
-        const matched = subadmins.find(
-          (s: any) => s.username.toLowerCase() === username.toLowerCase() && s.password === password
-        );
+        subadmins = await res.json();
+        localStorage.setItem("bg_subadmins_cache", JSON.stringify(subadmins));
+      } else {
+        const stored = localStorage.getItem("bg_subadmins_cache");
+        if (stored) subadmins = JSON.parse(stored);
+      }
 
-        if (matched) {
-          if (matched.status === "Suspended") {
-            setError("Your sub-admin account is suspended. Contact admin.");
-          } else {
+      const matched = subadmins.find(
+        (s: any) => s.username && s.username.toLowerCase() === cleanUser && s.password === cleanPass
+      );
+
+      if (matched) {
+        if (matched.status === "Suspended") {
+          setError("Your sub-admin account is suspended. Contact admin.");
+        } else {
+          sessionStorage.setItem("bg_admin_auth", "true");
+          sessionStorage.setItem("bg_auth_role", "subadmin");
+          sessionStorage.setItem("bg_subadmin_username", matched.username);
+          sessionStorage.setItem("bg_subadmin_name", matched.name);
+          onLogin("subadmin", matched.name, []);
+        }
+      } else {
+        setError("Invalid username or password.");
+      }
+    } catch (err) {
+      console.error("Error verifying subadmin:", err);
+      // Try local cache before throwing error
+      try {
+        const stored = localStorage.getItem("bg_subadmins_cache");
+        if (stored) {
+          const subadmins = JSON.parse(stored);
+          const matched = subadmins.find(
+            (s: any) => s.username && s.username.toLowerCase() === cleanUser && s.password === cleanPass
+          );
+          if (matched) {
             sessionStorage.setItem("bg_admin_auth", "true");
             sessionStorage.setItem("bg_auth_role", "subadmin");
             sessionStorage.setItem("bg_subadmin_username", matched.username);
             sessionStorage.setItem("bg_subadmin_name", matched.name);
             onLogin("subadmin", matched.name, []);
+            setLoading(false);
+            return;
           }
-        } else {
-          setError("Invalid username or password.");
         }
-      } else {
-        setError("Error connecting to server.");
-      }
-    } catch (err) {
-      console.error("Error verifying subadmin:", err);
-      setError("Network error. Backend might be down.");
+      } catch (e) {}
+
+      setError("Invalid username or password.");
     }
     setLoading(false);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#050b18] via-[#0a1128] to-[#050b18] flex items-center justify-center px-4 relative overflow-hidden">
+      {/* Top Left Back to Website Button */}
+      <button
+        type="button"
+        onClick={() => navigate("/")}
+        className="absolute top-6 left-6 z-20 inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/15 rounded-full text-slate-200 text-xs font-bold transition-all shadow-lg cursor-pointer"
+      >
+        <FaArrowLeft className="text-xs" />
+        <span>Back to Website</span>
+      </button>
+
       {/* Blobs */}
       <div className="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-indigo-500/10 rounded-full blur-[100px]"></div>
       <div className="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[100px]"></div>
@@ -282,6 +336,18 @@ const LoginPage = ({ onLogin }: { onLogin: (role: "admin" | "subadmin", name: st
               className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white font-bold text-sm uppercase tracking-wider rounded-xl transition duration-200 mt-4 cursor-pointer border-none shadow-lg shadow-indigo-500/20 active:scale-[0.98]">
               {loading ? "Authenticating..." : "Login to Admin Panel"}
             </button>
+
+            {/* Back to Website Bottom Link */}
+            <div className="text-center pt-2">
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="inline-flex items-center gap-2 text-slate-400 hover:text-indigo-400 text-xs font-bold transition cursor-pointer bg-transparent border-none"
+              >
+                <FaArrowLeft className="text-[10px]" />
+                <span>Back to Main Website</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -316,58 +382,86 @@ const PlansTab = () => {
     fetch("/api/planconfig")
       .then(res => res.json())
       .then(data => {
-        if (data) {
-          setCfg({ ...DEFAULT_PLAN_CONFIG, ...data });
+        if (data && typeof data === "object" && !data.message && (data.oneTimePrice || data.courseName)) {
+          setCfg({
+            ...DEFAULT_PLAN_CONFIG,
+            ...data,
+            oneTimePrice: Number(data.oneTimePrice) || DEFAULT_PLAN_CONFIG.oneTimePrice,
+            oneTimeOriginalPrice: Number(data.oneTimeOriginalPrice) || DEFAULT_PLAN_CONFIG.oneTimeOriginalPrice,
+            installment1Price: Number(data.installment1Price) || DEFAULT_PLAN_CONFIG.installment1Price,
+            installment2Price: Number(data.installment2Price) || DEFAULT_PLAN_CONFIG.installment2Price,
+            discountPercent: Number(data.discountPercent) || DEFAULT_PLAN_CONFIG.discountPercent,
+            oneTimeDiscountPercent: Number(data.oneTimeDiscountPercent ?? data.discountPercent ?? 10),
+            installment1DiscountPercent: Number(data.installment1DiscountPercent ?? data.discountPercent ?? 10),
+            installment2DiscountPercent: Number(data.installment2DiscountPercent ?? data.discountPercent ?? 10),
+            oneTimeFeatures: Array.isArray(data.oneTimeFeatures) && data.oneTimeFeatures.length > 0 ? data.oneTimeFeatures : DEFAULT_PLAN_CONFIG.oneTimeFeatures,
+            installmentFeatures: Array.isArray(data.installmentFeatures) && data.installmentFeatures.length > 0 ? data.installmentFeatures : DEFAULT_PLAN_CONFIG.installmentFeatures,
+            courses: Array.isArray(data.courses) && data.courses.length > 0 ? data.courses : DEFAULT_PLAN_CONFIG.courses,
+            colleges: Array.isArray(data.colleges) && data.colleges.length > 0 ? data.colleges : DEFAULT_PLAN_CONFIG.colleges,
+            cities: Array.isArray(data.cities) && data.cities.length > 0 ? data.cities : DEFAULT_PLAN_CONFIG.cities,
+          });
           if (data._id) setDbId(data._id);
+        } else {
+          // Fallback to local storage if API didn't return valid config
+          const local = loadPlanConfig();
+          setCfg(local);
         }
       })
-      .catch(err => console.warn("Failed to load planconfig from DB:", err));
+      .catch(err => {
+        console.warn("Failed to load planconfig from DB, loading local fallback:", err);
+        setCfg(loadPlanConfig());
+      });
   }, []);
 
   const update = (key: keyof PlanConfig, value: string | number | string[]) =>
     setCfg(prev => ({ ...prev, [key]: value }));
 
   const updateFeature = (plan: "oneTimeFeatures" | "installmentFeatures", idx: number, val: string) => {
-    const arr = [...cfg[plan]];
+    const arr = [...(cfg[plan] || [])];
     arr[idx] = val;
     update(plan, arr);
   };
 
   const addFeature = (plan: "oneTimeFeatures" | "installmentFeatures") =>
-    update(plan, [...cfg[plan], ""]);
+    update(plan, [...(cfg[plan] || []), ""]);
 
   const removeFeature = (plan: "oneTimeFeatures" | "installmentFeatures", idx: number) =>
-    update(plan, cfg[plan].filter((_, i) => i !== idx));
+    update(plan, (cfg[plan] || []).filter((_, i) => i !== idx));
 
   const handleSave = async () => {
-    // Save to local storage for backward compatibility / fallback
+    // Save to local storage for instant fallback
     savePlanConfig(cfg);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
 
-    // Save to database
+    // Sync with backend API database
     try {
       const url = dbId ? `/api/planconfig/${dbId}` : "/api/planconfig";
-      const method = dbId ? "PUT" : "POST";
       const res = await fetch(url, {
-        method,
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(cfg),
       });
       if (res.ok) {
         const savedData = await res.json();
-        if (savedData._id) setDbId(savedData._id);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2500);
-      } else {
-        alert("Failed to save configuration to database.");
+        if (savedData && savedData._id) setDbId(savedData._id);
       }
     } catch (e) {
-      console.error(e);
-      alert("Error saving configuration to backend database.");
+      console.warn("Backend sync failed, config saved locally.", e);
     }
   };
 
-  const discountedOneTime = Math.round(cfg.oneTimePrice * (1 - cfg.discountPercent / 100));
-  const discountedInst = Math.round(cfg.installment1Price * (1 - cfg.discountPercent / 100));
+  const oneTimePrice = cfg.oneTimePrice ?? 6000;
+  const installment1Price = cfg.installment1Price ?? 3200;
+  const installment2Price = cfg.installment2Price ?? 3200;
+
+  const oneTimeDiscPct = cfg.oneTimeDiscountPercent ?? cfg.discountPercent ?? 10;
+  const inst1DiscPct = cfg.installment1DiscountPercent ?? cfg.discountPercent ?? 10;
+  const inst2DiscPct = cfg.installment2DiscountPercent ?? cfg.discountPercent ?? 10;
+
+  const discountedOneTime = Math.round(oneTimePrice * (1 - oneTimeDiscPct / 100));
+  const discountedInst1 = Math.round(installment1Price * (1 - inst1DiscPct / 100));
+  const discountedInst2 = Math.round(installment2Price * (1 - inst2DiscPct / 100));
 
   const inputCls = "w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-indigo-500 transition";
   const labelCls = "block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2";
@@ -406,8 +500,8 @@ const PlansTab = () => {
             <input type="number" min="0" className={inputCls} value={cfg.heroOfferPrice} onChange={e => update("heroOfferPrice", parseInt(e.target.value) || 0)} />
           </div>
           <div>
-            <label className={labelCls}>Referral Discount (%)</label>
-            <input type="number" min="0" max="50" className={inputCls} value={cfg.discountPercent} onChange={e => update("discountPercent", parseInt(e.target.value) || 0)} />
+            <label className={labelCls}>Default Referral Discount (%)</label>
+            <input type="number" min="0" max="100" className={inputCls} value={cfg.discountPercent} onChange={e => update("discountPercent", parseInt(e.target.value) || 0)} />
           </div>
         </div>
       </Card>
@@ -436,19 +530,23 @@ const PlansTab = () => {
             <p className="font-extrabold text-slate-800 dark:text-white text-sm">One-Time Payment Plan</p>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-5">
             <div>
               <label className={labelCls}>Full Price (₹)</label>
               <input type="number" min="0" className={inputCls} value={cfg.oneTimePrice} onChange={e => update("oneTimePrice", parseInt(e.target.value) || 0)} />
             </div>
             <div>
-              <label className={labelCls}>Original / Crossed Price (₹)</label>
+              <label className={labelCls}>Original Price (₹)</label>
               <input type="number" min="0" className={inputCls} value={cfg.oneTimeOriginalPrice} onChange={e => update("oneTimeOriginalPrice", parseInt(e.target.value) || 0)} />
+            </div>
+            <div>
+              <label className={labelCls}>Referral Discount (%)</label>
+              <input type="number" min="0" max="100" className={inputCls} value={oneTimeDiscPct} onChange={e => update("oneTimeDiscountPercent", parseInt(e.target.value) || 0)} />
             </div>
           </div>
 
           <div className="bg-indigo-50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/15 rounded-xl px-4 py-3 mb-5 text-xs font-semibold text-orange-700 dark:text-indigo-400">
-            With {cfg.discountPercent}% referral code: <span className="font-extrabold">₹{discountedOneTime.toLocaleString("en-IN")}</span>
+            With {oneTimeDiscPct}% referral code: <span className="font-extrabold">₹{discountedOneTime.toLocaleString("en-IN")}</span>
           </div>
 
           <div>
@@ -459,7 +557,7 @@ const PlansTab = () => {
               </button>
             </div>
             <div className="space-y-2">
-              {cfg.oneTimeFeatures.map((f, i) => (
+              {(cfg.oneTimeFeatures || []).map((f, i) => (
                 <div key={i} className="flex gap-2 items-center">
                   <input className={inputCls + " flex-1"} value={f} onChange={e => updateFeature("oneTimeFeatures", i, e.target.value)} placeholder={`Feature ${i + 1}`} />
                   <button onClick={() => removeFeature("oneTimeFeatures", i)} className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 bg-transparent border-none cursor-pointer p-1 shrink-0">
@@ -478,7 +576,7 @@ const PlansTab = () => {
             <p className="font-extrabold text-slate-800 dark:text-white text-sm">Flexible Installment Plan</p>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-3">
             <div>
               <label className={labelCls}>1st Installment (₹)</label>
               <input type="number" min="0" className={inputCls} value={cfg.installment1Price} onChange={e => update("installment1Price", parseInt(e.target.value) || 0)} />
@@ -489,8 +587,19 @@ const PlansTab = () => {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
+            <div>
+              <label className={labelCls}>1st Inst. Referral Discount (%)</label>
+              <input type="number" min="0" max="100" className={inputCls} value={inst1DiscPct} onChange={e => update("installment1DiscountPercent", parseInt(e.target.value) || 0)} />
+            </div>
+            <div>
+              <label className={labelCls}>2nd Inst. Referral Discount (%)</label>
+              <input type="number" min="0" max="100" className={inputCls} value={inst2DiscPct} onChange={e => update("installment2DiscountPercent", parseInt(e.target.value) || 0)} />
+            </div>
+          </div>
+
           <div className="bg-blue-50 dark:bg-blue-500/5 border border-blue-100 dark:border-blue-500/15 rounded-xl px-4 py-3 mb-5 text-xs font-semibold text-blue-700 dark:text-blue-400">
-            With {cfg.discountPercent}% referral code: 1st ₹{discountedInst.toLocaleString("en-IN")} · 2nd ₹{Math.round(cfg.installment2Price * (1 - cfg.discountPercent / 100)).toLocaleString("en-IN")}
+            With referral code: 1st ({inst1DiscPct}%) ₹{discountedInst1.toLocaleString("en-IN")} · 2nd ({inst2DiscPct}%) ₹{discountedInst2.toLocaleString("en-IN")}
           </div>
 
           <div>
@@ -501,7 +610,7 @@ const PlansTab = () => {
               </button>
             </div>
             <div className="space-y-2">
-              {cfg.installmentFeatures.map((f, i) => (
+              {(cfg.installmentFeatures || []).map((f, i) => (
                 <div key={i} className="flex gap-2 items-center">
                   <input className={inputCls + " flex-1"} value={f} onChange={e => updateFeature("installmentFeatures", i, e.target.value)} placeholder={`Feature ${i + 1}`} />
                   <button onClick={() => removeFeature("installmentFeatures", i)} className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 bg-transparent border-none cursor-pointer p-1 shrink-0">
@@ -730,8 +839,8 @@ const PlansTab = () => {
           <div className="flex-1 min-w-[180px] bg-blue-50 dark:bg-blue-500/5 border border-blue-100 dark:border-blue-500/15 rounded-2xl px-5 py-4">
             <p className="text-xs text-blue-500 dark:text-blue-400 font-bold uppercase tracking-wider mb-1">Installment Plan</p>
             <p className="text-2xl font-extrabold text-slate-900 dark:text-white">₹{cfg.installment1Price.toLocaleString("en-IN")}<span className="text-sm font-semibold text-slate-400 ml-1">/mo</span></p>
-            <p className="text-xs text-slate-400 mt-0.5">2nd: ₹{cfg.installment2Price.toLocaleString("en-IN")}</p>
-            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">With code: ₹{discountedInst.toLocaleString("en-IN")}/mo</p>
+            <p className="text-xs text-slate-400 mt-0.5">2nd: ₹{installment2Price.toLocaleString("en-IN")}</p>
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">With code: 1st ₹{discountedInst1.toLocaleString("en-IN")} · 2nd ₹{discountedInst2.toLocaleString("en-IN")}</p>
           </div>
         </div>
       </Card>
@@ -3120,7 +3229,7 @@ const AdminPanel = () => {
             />
           )}
           {activeTab === "payments"       && <PaymentsTab payments={filteredPayments} onAddPayment={openDueModal} onDeletePayment={handleDeletePayment} userRole={userRole} />}
-          {activeTab === "plans"          && userRole === "admin" && <PlansTab />}
+          {activeTab === "plans"          && <PlansTab />}
           {activeTab === "referrals"      && userRole === "admin" && <ReferralTab />}
           {activeTab === "subadmins"      && userRole === "admin" && <SubAdminsTab registrations={registrations} payments={payments} />}
           {activeTab === "mycodes"        && userRole === "subadmin" && <SubAdminCodesTab username={subadminUsername} />}

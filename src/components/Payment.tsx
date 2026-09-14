@@ -31,6 +31,9 @@ function Payment() {
         installment1Price: 3200,
         installment2Price: 3200,
         discountPercent: 10,
+        oneTimeDiscountPercent: 10,
+        installment1DiscountPercent: 10,
+        installment2DiscountPercent: 10,
       };
     } catch {
       return {
@@ -39,6 +42,9 @@ function Payment() {
         installment1Price: 3200,
         installment2Price: 3200,
         discountPercent: 10,
+        oneTimeDiscountPercent: 10,
+        installment1DiscountPercent: 10,
+        installment2DiscountPercent: 10,
       };
     }
   });
@@ -52,7 +58,7 @@ function Payment() {
             setCfg(data);
             localStorage.setItem("bg_plan_config", JSON.stringify(data));
             if (initialDiscountApplied) {
-              setPromoSuccess(`Referral code applied! ${data.discountPercent}% Discount saved.`);
+              setPromoSuccess(`Referral code applied! Discount saved.`);
             }
           }
         })
@@ -64,7 +70,7 @@ function Payment() {
               const parsed = JSON.parse(s);
               setCfg(parsed);
               if (initialDiscountApplied) {
-                setPromoSuccess(`Referral code applied! ${parsed.discountPercent}% Discount saved.`);
+                setPromoSuccess(`Referral code applied! Discount saved.`);
               }
             }
           } catch (e) {
@@ -100,14 +106,14 @@ function Payment() {
         setDiscountAppliedState(false);
       } else {
         setDiscountAppliedState(true);
-        setPromoSuccess(`Referral code applied! ${cfg.discountPercent}% Discount saved.`);
+        setPromoSuccess(`Referral code applied! Discount saved.`);
         setPromoError("");
       }
     } else {
       const isFallbackDefault = ["BEANGATE10", "REF10", "MERN10"].includes(inputCode);
       if (isFallbackDefault) {
         setDiscountAppliedState(true);
-        setPromoSuccess(`Referral code applied! ${cfg.discountPercent}% Discount saved.`);
+        setPromoSuccess(`Referral code applied! Discount saved.`);
         setPromoError("");
       } else {
         setPromoError("Invalid referral code.");
@@ -116,32 +122,50 @@ function Payment() {
     }
   };
 
+  const oneTimeDiscPct = cfg.oneTimeDiscountPercent ?? cfg.discountPercent ?? 10;
+  const inst1DiscPct = cfg.installment1DiscountPercent ?? cfg.discountPercent ?? 10;
+  const inst2DiscPct = cfg.installment2DiscountPercent ?? cfg.discountPercent ?? 10;
+
   const paymentPlans = [
     {
       id: "one-time",
-      title: discountAppliedState ? `${cfg.courseName} - One-Time (${cfg.discountPercent}% Code Applied)` : `${cfg.courseName} - One-Time Payment`,
-      basePrice: discountAppliedState ? Math.round(cfg.oneTimePrice * (1 - cfg.discountPercent / 100)) : cfg.oneTimePrice,
-      description: discountAppliedState ? `Special discounted price (${cfg.discountPercent}% OFF applied)` : "Pay full course fee once and save ₹400",
+      title: discountAppliedState ? `${cfg.courseName} - One-Time (${oneTimeDiscPct}% Code Applied)` : `${cfg.courseName} - One-Time Payment`,
+      basePrice: discountAppliedState ? Math.round(cfg.oneTimePrice * (1 - oneTimeDiscPct / 100)) : cfg.oneTimePrice,
+      description: discountAppliedState ? `Special discounted price (${oneTimeDiscPct}% OFF applied)` : "Pay full course fee once and save extra",
       tag: discountAppliedState ? "Promo Applied" : "Best Value"
     },
     {
       id: "inst-1",
-      title: discountAppliedState ? `${cfg.courseName} - 1st Installment (${cfg.discountPercent}% OFF)` : `${cfg.courseName} - 1st Installment`,
-      basePrice: discountAppliedState ? Math.round(cfg.installment1Price * (1 - cfg.discountPercent / 100)) : cfg.installment1Price,
-      description: discountAppliedState ? `First installment (${cfg.discountPercent}% OFF applied)` : "First installment to start the course",
+      title: discountAppliedState ? `${cfg.courseName} - 1st Installment (${inst1DiscPct}% OFF)` : `${cfg.courseName} - 1st Installment`,
+      basePrice: discountAppliedState ? Math.round(cfg.installment1Price * (1 - inst1DiscPct / 100)) : cfg.installment1Price,
+      description: discountAppliedState ? `First installment (${inst1DiscPct}% OFF applied)` : "First installment to start the course",
       tag: "Flexible"
     },
     {
       id: "inst-2",
-      title: discountAppliedState ? `${cfg.courseName} - 2nd Installment (${cfg.discountPercent}% OFF)` : `${cfg.courseName} - 2nd Installment`,
-      basePrice: discountAppliedState ? Math.round(cfg.installment2Price * (1 - cfg.discountPercent / 100)) : cfg.installment2Price,
-      description: discountAppliedState ? `Second installment (${cfg.discountPercent}% OFF applied)` : "Second installment during the course",
+      title: discountAppliedState ? `${cfg.courseName} - 2nd Installment (${inst2DiscPct}% OFF)` : `${cfg.courseName} - 2nd Installment`,
+      basePrice: discountAppliedState ? Math.round(cfg.installment2Price * (1 - inst2DiscPct / 100)) : cfg.installment2Price,
+      description: discountAppliedState ? `Second installment (${inst2DiscPct}% OFF applied)` : "Second installment during the course",
       tag: "Flexible"
     }
   ];
 
   const [selectedPlanId, setSelectedPlanId] = useState(preSelectedPlanId);
   const selectedPlan = paymentPlans.find((p) => p.id === selectedPlanId) || paymentPlans[0];
+
+  const originalPlanPrice = selectedPlanId === "one-time" 
+    ? cfg.oneTimePrice 
+    : selectedPlanId === "inst-2" 
+      ? cfg.installment2Price 
+      : cfg.installment1Price;
+
+  const activeDiscountPct = selectedPlanId === "one-time" 
+    ? oneTimeDiscPct 
+    : selectedPlanId === "inst-2" 
+      ? inst2DiscPct 
+      : inst1DiscPct;
+
+  const discountSavedAmount = discountAppliedState ? Math.max(0, originalPlanPrice - selectedPlan.basePrice) : 0;
   const gstAmount = Math.round(selectedPlan.basePrice * 0.18);
   const totalAmount = selectedPlan.basePrice + gstAmount;
 
@@ -398,12 +422,29 @@ function Payment() {
               <p className="text-xs text-slate-600 mb-6 font-bold leading-relaxed">{selectedPlan.description}</p>
               
               <div className="space-y-2.5 border-t border-slate-200 pt-4">
+                {discountAppliedState ? (
+                  <>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-600 font-bold">Original Course Fee:</span>
+                      <span className="text-slate-400 line-through font-semibold">₹{originalPlanPrice.toLocaleString("en-IN")}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs text-emerald-600 font-bold">
+                      <span>Referral Discount ({activeDiscountPct}% OFF):</span>
+                      <span>-₹{discountSavedAmount.toLocaleString("en-IN")}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-700 font-extrabold">Discounted Fee:</span>
+                      <span className="text-slate-900 font-black">₹{selectedPlan.basePrice.toLocaleString("en-IN")}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-600 font-bold">Course Fee (Base Price):</span>
+                    <span className="text-slate-800 font-extrabold">₹{selectedPlan.basePrice.toLocaleString("en-IN")}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-600 font-bold">Course Fee (Base Price):</span>
-                  <span className="text-slate-800 font-extrabold">{basePriceStr}</span>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-600 font-bold">GST (18%):</span>
+                  <span className="text-slate-600 font-bold">GST (18% on {discountAppliedState ? "Discounted Fee" : "Fee"}):</span>
                   <span className="text-slate-800 font-extrabold">{gstAmountStr}</span>
                 </div>
                 <div className="flex items-baseline justify-between border-t border-dashed border-slate-200 pt-2.5">
@@ -749,7 +790,7 @@ function Payment() {
                   <span className="font-black text-red-500 text-sm">
                     {(() => {
                       const totalCourseBase = discountAppliedState 
-                        ? Math.round(cfg.oneTimePrice * (1 - cfg.discountPercent / 100)) 
+                        ? Math.round(cfg.oneTimePrice * (1 - oneTimeDiscPct / 100)) 
                         : cfg.oneTimePrice;
                       const totalCourseWithGST = Math.round(totalCourseBase * 1.18);
                       const paid = parseInt((receiptData?.total || "0").replace(/[^0-9]/g, "")) || 0;

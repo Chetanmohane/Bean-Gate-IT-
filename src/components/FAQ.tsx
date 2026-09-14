@@ -1,64 +1,111 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from "react";
+import { HiChevronDown } from "react-icons/hi";
 
 const FAQ = () => {
-  const [activeIndex, setActiveIndex] = useState(null);
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
 
-  const faqs = [
-    { q: "Is this course suitable for beginners?", a: "Yes, this course starts from the absolute basics and goes up to advanced level." },
-    { q: "Will I get placement assistance?", a: "Yes, we provide 100% placement assistance including resume building and mock interviews." },
-   
-    { q: "Which language will be used in the course?", a: "The course will be taught in a mix of Hindi and English for better understanding." },
-    { q: "What is the duration of the course?", a: "The course duration is 3 months with daily practical sessions." },
-    { q: "Will I get a certificate?", a: "Yes, a certificate of completion will be provided after you finish the projects." },
-    { q: "Will I get an internship certificate after the course?", a: "Yes! Upon successful completion of the course, you will receive a 3-month Internship Completion Certificate from BeanGate IT Solutions, highlighting your experience working on live projects." },
+  const col1 = [
+    {
+      q: "Who is this course for?",
+      a: "This course is designed for students, freshers, job seekers, and working professionals who want to master MERN Stack development with real-world practical projects.",
+    },
+    {
+      q: "Do I need prior coding experience?",
+      a: "No prior experience is strictly required. We cover HTML, CSS, JavaScript basics before moving into advanced React, Node, Express & MongoDB.",
+    },
+    {
+      q: "What technologies will I learn?",
+      a: "You will master MongoDB, Express.js, React.js, Node.js, HTML5, CSS3, JavaScript (ES6+), Git/GitHub, and RESTful APIs.",
+    },
+    {
+      q: "What happens after payment?",
+      a: "Upon successful enrollment, you get instant access to the student portal, course materials, live batch orientation details, and student Discord/WhatsApp community.",
+    },
   ];
 
-  const toggleFAQ = (index) => {
-    setActiveIndex(activeIndex === index ? null : index);
+  const col2 = [
+    {
+      q: "How long is the course?",
+      a: "The training spans comprehensive practical live modules with project building and placement guidance.",
+    },
+    {
+      q: "Will I get a certificate?",
+      a: "Yes! You will receive an industry-recognized Certificate of Completion from BeanGate IT Solutions Pvt. Ltd.",
+    },
+    {
+      q: "What is the refund policy?",
+      a: "Please refer to our terms and conditions for full policy details.",
+    },
+    {
+      q: "Is placement assistance included?",
+      a: "Yes! We provide dedicated resume building, mock interviews, project portfolio reviews, and direct job referral assistance.",
+    },
+  ];
+
+  const toggle = (idx: number) => {
+    setOpenIdx(openIdx === idx ? null : idx);
   };
 
   return (
-    <section className="py-20 bg-white" id="faq">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-bold text-blue-600 uppercase tracking-wider mb-10">Frequently Asked Questions</h2>
+    <section id="faq" className="py-16 sm:py-20 bg-white text-gray-900 border-b border-gray-100">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 text-center">
         
-       <div className="grid md:grid-cols-2 gap-6">
-  {faqs.map((faq, index) => (
-    <div
-      key={index}
-      className="border border-gray-200 rounded-lg overflow-hidden h-fit"
-    >
-      <button
-        className="w-full text-left px-6 py-4 bg-gray-50 flex justify-between items-center"
-        onClick={() => toggleFAQ(index)}
-      >
-        <span className="font-semibold text-gray-800 pr-4">
-          {faq.q}
-        </span>
+        <h2 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight mb-10">
+          Frequently Asked Questions
+        </h2>
 
-        <span className="text-blue-600 text-2xl font-bold">
-          {activeIndex === index ? "−" : "+"}
-        </span>
-      </button>
+        <div className="grid md:grid-cols-2 gap-4 text-left">
+          
+          {/* Column 1 */}
+          <div className="space-y-3">
+            {col1.map((item, i) => {
+              const idx = i;
+              const isOpen = openIdx === idx;
+              return (
+                <div key={i} className="border border-gray-200 rounded-xl overflow-hidden bg-gray-50/50">
+                  <button
+                    onClick={() => toggle(idx)}
+                    className="w-full px-5 py-4 flex items-center justify-between font-bold text-gray-800 text-xs sm:text-sm text-left hover:bg-gray-100 transition border-none cursor-pointer"
+                  >
+                    <span>{item.q}</span>
+                    <HiChevronDown className={`text-gray-500 text-lg transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {isOpen && (
+                    <div className="px-5 pb-4 pt-1 text-xs sm:text-sm text-gray-600 font-medium leading-relaxed bg-white border-t border-gray-100">
+                      {item.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
-      <AnimatePresence>
-        {activeIndex === index && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="px-6 py-4 bg-white border-t border-gray-200 text-gray-600 text-sm">
-              {faq.a}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  ))}
-</div>
+          {/* Column 2 */}
+          <div className="space-y-3">
+            {col2.map((item, i) => {
+              const idx = i + 10;
+              const isOpen = openIdx === idx;
+              return (
+                <div key={i} className="border border-gray-200 rounded-xl overflow-hidden bg-gray-50/50">
+                  <button
+                    onClick={() => toggle(idx)}
+                    className="w-full px-5 py-4 flex items-center justify-between font-bold text-gray-800 text-xs sm:text-sm text-left hover:bg-gray-100 transition border-none cursor-pointer"
+                  >
+                    <span>{item.q}</span>
+                    <HiChevronDown className={`text-gray-500 text-lg transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {isOpen && (
+                    <div className="px-5 pb-4 pt-1 text-xs sm:text-sm text-gray-600 font-medium leading-relaxed bg-white border-t border-gray-100">
+                      {item.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+        </div>
+
       </div>
     </section>
   );

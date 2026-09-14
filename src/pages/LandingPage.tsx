@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import Lenis from "lenis";
+
 import Navbar from "../components/Navbar";
 import Hero from "../components/Hero";
-import Stats from "../components/Stats";
+import DegreeVsSkill from "../components/DegreeVsSkill";
+import ITCompanySection from "../components/ITCompanySection";
+import TechStackSection from "../components/TechStackSection";
+import CurriculumSection from "../components/CurriculumSection";
 import Projects from "../components/Projects";
-import WhyChoose from "../components/WhyChoose";
+import Pricing from "../components/Pricing";
 import Trainer from "../components/Trainer";
+import Cartificate from "../components/Cartificate";
 import Offer from "../components/Offer";
 import FAQ from "../components/FAQ";
+import FooterBanner from "../components/FooterBanner";
 import Footer from "../components/Footer";
-import Cartificate from "../components/Cartificate";
-import Pricing from "../components/Pricing";
 
 const LandingPage = () => {
   const [selectedPlanId, setSelectedPlanId] = useState("one-time");
@@ -36,7 +39,6 @@ const LandingPage = () => {
 
     requestAnimationFrame(raf);
 
-    // Custom helper to scroll cleanly to hashed sections
     const handleAnchorClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const anchor = target.closest("a");
@@ -57,62 +59,69 @@ const LandingPage = () => {
     };
   }, []);
 
-  const sectionProps = {
-    initial: { opacity: 0, y: 45 },
-    whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true, amount: 0.1 },
-    transition: { duration: 0.7, ease: "easeOut" }
-  };
-
   return (
-    <div className="font-sans text-gray-900 bg-gray-50 min-h-screen overflow-x-hidden">
+    <div className="font-sans text-gray-900 bg-white min-h-screen overflow-x-hidden">
+      {/* Navbar */}
       <Navbar />
 
-      <motion.section id="home" {...sectionProps}>
+      {/* Hero Section */}
+      <section id="home">
         <Hero />
-      </motion.section>
+      </section>
 
-      <motion.section id="course" {...sectionProps}>
-        <Stats />
-      </motion.section>
+      {/* Is Just a Degree Enough? Section */}
+      <DegreeVsSkill />
 
-      <motion.section id="projects" className="scroll-mt-24" {...sectionProps}>
-        <Projects />
-      </motion.section>
+      {/* We Are an IT Company Section */}
+      <ITCompanySection />
 
-      <motion.section id="trainer" {...sectionProps}>
+      {/* Master MERN Stack & Also You Will Learn */}
+      <TechStackSection />
+
+      {/* What You Will Learn (Curriculum) */}
+      <CurriculumSection />
+
+      {/* Learn By Building Real-World Projects */}
+      <Projects />
+
+      {/* Trainer Section */}
+      <section id="trainer">
         <Trainer />
-      </motion.section>
-      
-      <motion.section id="cartificate" {...sectionProps}>
-        <Cartificate/>
-      </motion.section>
-      
-      <motion.section id="pricing" {...sectionProps}>
-        <Pricing 
-          selectedPlanId={selectedPlanId} 
-          setSelectedPlanId={setSelectedPlanId} 
-          appliedDiscount={appliedDiscount} 
-          setAppliedDiscount={setAppliedDiscount} 
-        />
-      </motion.section>
-      
-      <motion.section id="reviews" {...sectionProps}>
-        <Offer 
-          selectedPlanId={selectedPlanId} 
-          setSelectedPlanId={setSelectedPlanId} 
-          appliedDiscount={appliedDiscount} 
-          setAppliedDiscount={setAppliedDiscount} 
-        />
-      </motion.section>
+      </section>
 
-      <motion.section id="faq" {...sectionProps}>
-        <FAQ />
-      </motion.section>
+      {/* Certificate Section */}
+      <section id="cartificate">
+        <Cartificate />
+      </section>
 
-      <motion.section id="contact" {...sectionProps}>
-        <Footer />
-      </motion.section>
+      {/* Pricing Plans & Referral Code Section */}
+      <section id="pricing">
+        <Pricing
+          selectedPlanId={selectedPlanId}
+          setSelectedPlanId={setSelectedPlanId}
+          appliedDiscount={appliedDiscount}
+          setAppliedDiscount={setAppliedDiscount}
+        />
+      </section>
+
+      {/* Registration & Special Offer Form (connected to Admin / Referral Code / Payment) */}
+      <section id="reviews">
+        <Offer
+          selectedPlanId={selectedPlanId}
+          setSelectedPlanId={setSelectedPlanId}
+          appliedDiscount={appliedDiscount}
+          setAppliedDiscount={setAppliedDiscount}
+        />
+      </section>
+
+      {/* FAQ Section */}
+      <FAQ />
+
+      {/* Footer Banner */}
+      <FooterBanner />
+
+      {/* Main Footer */}
+      <Footer />
     </div>
   );
 };
