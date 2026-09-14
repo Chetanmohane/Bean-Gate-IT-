@@ -53,7 +53,7 @@ const Hero = () => {
               <span className="text-gray-400 font-normal">➔</span>
               <span>Build</span>
               <span className="text-gray-400 font-normal">➔</span>
-              <span>Lead</span>
+              <span>Innovate</span>
             </div>
 
             {/* Body Description */}

@@ -15,6 +15,8 @@ import Offer from "../components/Offer";
 import FAQ from "../components/FAQ";
 import FooterBanner from "../components/FooterBanner";
 import Footer from "../components/Footer";
+import MasterclassModal from "../components/MasterclassModal";
+import WhatsAppButton from "../components/WhatsAppButton";
 
 const LandingPage = () => {
   const [selectedPlanId, setSelectedPlanId] = useState("one-time");
@@ -61,6 +63,12 @@ const LandingPage = () => {
 
   return (
     <div className="font-sans text-gray-900 bg-white min-h-screen overflow-x-hidden">
+      {/* Floating WhatsApp Button */}
+      <WhatsAppButton />
+
+      {/* Auto Masterclass Popup Modal */}
+      <MasterclassModal />
+
       {/* Navbar */}
       <Navbar />
 

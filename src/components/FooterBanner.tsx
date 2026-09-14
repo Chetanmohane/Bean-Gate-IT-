@@ -1,7 +1,58 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { FaPhoneAlt, FaEnvelope, FaGlobe } from "react-icons/fa";
 
+interface ContactInfo {
+  contactPhone?: string;
+  contactEmail?: string;
+}
+
+const DEFAULT_BANNER_PHONE = "+91 9752740090";
+
 const FooterBanner = () => {
+  const [phone, setPhone] = useState(DEFAULT_BANNER_PHONE);
+  const [email, setEmail] = useState("beangate.official@gmail.com");
+
+  const fetchConfig = () => {
+    try {
+      const s = localStorage.getItem("bg_plan_config");
+      if (s) {
+        const parsed = JSON.parse(s);
+        if (parsed.contactPhone) setPhone(parsed.contactPhone.split(",")[0].trim());
+        if (parsed.contactEmail) setEmail(parsed.contactEmail.split(",")[0].trim());
+      }
+    } catch (e) {}
+
+    fetch("/api/planconfig")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data) {
+          if (data.contactPhone) setPhone(data.contactPhone.split(",")[0].trim());
+          if (data.contactEmail) setEmail(data.contactEmail.split(",")[0].trim());
+        }
+      })
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    fetchConfig();
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "bg_plan_config") {
+        fetchConfig();
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("bg_config_updated", fetchConfig);
+    window.addEventListener("focus", fetchConfig);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("bg_config_updated", fetchConfig);
+      window.removeEventListener("focus", fetchConfig);
+    };
+  }, []);
+
   const scrollToRegister = () => {
     const el = document.getElementById("register") || document.getElementById("pricing");
     if (el) {
@@ -9,6 +60,8 @@ const FooterBanner = () => {
       window.scrollTo({ top: y, behavior: "smooth" });
     }
   };
+
+  const cleanPhoneLink = phone.replace(/[^0-9+]/g, "");
 
   return (
     <div id="contact" className="bg-[#050C1B] text-white py-6 border-t border-blue-900/30">
@@ -40,13 +93,13 @@ const FooterBanner = () => {
 
           {/* Right Contact Info */}
           <div className="flex flex-wrap justify-center lg:justify-end items-center gap-4 text-xs font-bold text-gray-300">
-            <a href="tel:+919301970707" className="flex items-center gap-1.5 hover:text-orange-400 transition">
+            <a href={`tel:${cleanPhoneLink}`} className="flex items-center gap-1.5 hover:text-orange-400 transition">
               <FaPhoneAlt className="text-orange-500 text-xs" />
-              <span>+91 9301970707</span>
+              <span>{phone}</span>
             </a>
-            <a href="mailto:enquiry@beangates.com" className="flex items-center gap-1.5 hover:text-orange-400 transition">
+            <a href={`mailto:${email}`} className="flex items-center gap-1.5 hover:text-orange-400 transition">
               <FaEnvelope className="text-orange-500 text-xs" />
-              <span>enquiry@beangates.com</span>
+              <span>{email}</span>
             </a>
             <a href="https://www.beangates.com" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-orange-400 transition">
               <FaGlobe className="text-orange-500 text-xs" />

@@ -57,8 +57,18 @@ const Pricing = ({
     };
 
     fetchConfig();
+    const handleStorage = () => fetchConfig();
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("bg_config_updated", handleStorage);
+    window.addEventListener("focus", handleStorage);
+
     const interval = setInterval(fetchConfig, 5000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("bg_config_updated", handleStorage);
+      window.removeEventListener("focus", handleStorage);
+    };
   }, []);
 
   useEffect(() => {

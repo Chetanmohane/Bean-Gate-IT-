@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaLock } from "react-icons/fa";
+import { FaLock, FaShieldAlt, FaTimes, FaCheckCircle } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 interface OfferProps {
@@ -33,6 +33,9 @@ const Offer = ({
   const [cities, setCities] = useState<string[]>(["Bhopal", "Indore", "Jabalpur", "Other"]);
 
   const [referralCode, setReferralCode] = useState(appliedDiscount ? "BEANGATE10" : "");
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [termsError, setTermsError] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const [promoError, setPromoError] = useState("");
   const [promoSuccess, setPromoSuccess] = useState(appliedDiscount ? "Referral code applied! 10% Discount saved." : "");
 
@@ -93,8 +96,18 @@ const Offer = ({
     };
 
     fetchConfig();
+    const handleStorage = () => fetchConfig();
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("bg_config_updated", handleStorage);
+    window.addEventListener("focus", handleStorage);
+
     const interval = setInterval(fetchConfig, 5000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("bg_config_updated", handleStorage);
+      window.removeEventListener("focus", handleStorage);
+    };
   }, []);
 
   // Sync selectedPlanId prop with formData state
@@ -161,29 +174,42 @@ const Offer = ({
     setPromoError("");
   };
 
-  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [rawRegistrations, setRawRegistrations] = useState<any[]>([]);
 
-  // Real-time End of Day Timer
+  // Dynamic Special Offer Countdown Timer
   useEffect(() => {
     const calculateTimeLeft = () => {
       const now = new Date();
-      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-      const diff = endOfDay.getTime() - now.getTime();
-      
-      if (diff <= 0) return { hours: 0, minutes: 0, seconds: 0 };
-      
+      let targetTime: number;
+
+      if ((cfg.offerTimerMode === "target_date" || (!cfg.offerTimerMode && cfg.offerTargetDate)) && cfg.offerTargetDate) {
+        targetTime = new Date(cfg.offerTargetDate).getTime();
+      } else if (cfg.offerTimerMode === "hours" && cfg.offerTimerHours) {
+        const totalDurationMs = (cfg.offerTimerHours || 4) * 60 * 60 * 1000;
+        const currentMs = now.getTime() % totalDurationMs;
+        targetTime = now.getTime() + (totalDurationMs - currentMs);
+      } else {
+        // Default: End of current day (23:59:59)
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+        targetTime = endOfDay.getTime();
+      }
+
+      const diff = targetTime - now.getTime();
+      if (isNaN(diff) || diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((diff / 1000 / 60) % 60);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
       const seconds = Math.floor((diff / 1000) % 60);
-      
-      return { hours, minutes, seconds };
+
+      return { days, hours, minutes, seconds };
     };
 
     setTimeLeft(calculateTimeLeft());
     const timer = setInterval(() => setTimeLeft(calculateTimeLeft()), 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [cfg.offerTimerMode, cfg.offerTimerHours, cfg.offerTargetDate]);
 
   // Fetch Completed Registrations Count
   useEffect(() => {
@@ -266,6 +292,12 @@ const Offer = ({
     if (!formData.course) newErrors.course = true;
     if (!formData.college) newErrors.college = true;
     if (!formData.city) newErrors.city = true;
+    if (!agreeTerms) {
+      setTermsError(true);
+      newErrors.terms = true;
+    } else {
+      setTermsError(false);
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -340,14 +372,22 @@ const Offer = ({
                 </div>
 
                 {/* Timers block */}
-                <div className="grid grid-cols-3 gap-3 mb-6">
-                  {[
-                    { label: "HOURS", val: timeLeft.hours },
-                    { label: "MINUTES", val: timeLeft.minutes },
-                    { label: "SECONDS", val: timeLeft.seconds },
-                  ].map((t) => (
-                    <div key={t.label} className="bg-white/[0.04] border border-white/10 rounded-2xl py-4 px-1 text-center shadow-md">
-                      <span className="block text-2xl font-extrabold text-white tracking-tight font-sans">
+                <div className={`grid ${timeLeft.days > 0 ? "grid-cols-4" : "grid-cols-3"} gap-2.5 sm:gap-3 mb-6`}>
+                  {(timeLeft.days > 0
+                    ? [
+                        { label: "DAYS", val: timeLeft.days },
+                        { label: "HOURS", val: timeLeft.hours },
+                        { label: "MINUTES", val: timeLeft.minutes },
+                        { label: "SECONDS", val: timeLeft.seconds },
+                      ]
+                    : [
+                        { label: "HOURS", val: timeLeft.hours },
+                        { label: "MINUTES", val: timeLeft.minutes },
+                        { label: "SECONDS", val: timeLeft.seconds },
+                      ]
+                  ).map((t) => (
+                    <div key={t.label} className="bg-white/[0.04] border border-white/10 rounded-2xl py-3.5 sm:py-4 px-1 text-center shadow-md">
+                      <span className="block text-xl sm:text-2xl font-extrabold text-white tracking-tight font-sans">
                         {String(t.val).padStart(2, "0")}
                       </span>
                       <span className="block text-[8px] uppercase font-bold text-gray-400 mt-1.5 tracking-wider">{t.label}</span>
@@ -361,17 +401,48 @@ const Offer = ({
                 </p>
               </div>
 
-              {/* Batch Highlights (Fills vertical space beautifully with marketing bullets) */}
-              <div className="space-y-2.5 text-xs text-gray-300 border-t border-white/5 pt-4 text-left">
-                <div className="flex items-center gap-2">
-                  <span className="text-[#ff6600] font-bold">✓</span> Live Practical Interactive Classes
+              {/* Batch Highlights & Included Benefits */}
+              <div className="space-y-3 border-t border-white/10 pt-5 text-left">
+                <p className="text-xs font-black uppercase tracking-wider text-orange-400">
+                  What's Included in This Batch:
+                </p>
+
+                <div className="grid grid-cols-1 gap-2.5">
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-start gap-2.5">
+                    <span className="text-[#ff6600] font-bold text-sm shrink-0 mt-0.5">📜</span>
+                    <div>
+                      <h4 className="text-xs font-extrabold text-white">Dual Industry Certification</h4>
+                      <p className="text-[11px] text-gray-300">Official Course Completion + IT Internship Credential by BeanGate IT Solutions Pvt. Ltd.</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-start gap-2.5">
+                    <span className="text-[#ff6600] font-bold text-sm shrink-0 mt-0.5">💻</span>
+                    <div>
+                      <h4 className="text-xs font-extrabold text-white">Live Production Client Projects</h4>
+                      <p className="text-[11px] text-gray-300">Build real-world full-stack MERN apps with Git, REST APIs, and Cloud Deployment.</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-start gap-2.5">
+                    <span className="text-[#ff6600] font-bold text-sm shrink-0 mt-0.5">🎯</span>
+                    <div>
+                      <h4 className="text-xs font-extrabold text-white">1-on-1 Mentorship &amp; Placement Support</h4>
+                      <p className="text-[11px] text-gray-300">Dedicated doubt resolution, resume building, mock interviews, and job referrals.</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[#ff6600] font-bold">✓</span> Corporate-Level Industry Projects
+              </div>
+
+              {/* Bottom Rating & Security Trust Bar */}
+              <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between text-left mt-2">
+                <div className="flex items-center gap-1 text-amber-400 text-xs font-black">
+                  <span>⭐⭐⭐⭐⭐</span>
+                  <span className="text-white text-[11px] ml-1">4.9/5 Rating</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[#ff6600] font-bold">✓</span> 1-on-1 Doubt Solving & Placement Support
-                </div>
+                <span className="text-[10px] text-sky-400 font-bold uppercase tracking-wider">
+                  BeanGate IT Solutions
+                </span>
               </div>
 
 
@@ -441,27 +512,37 @@ const Offer = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className={`block text-xs font-semibold mb-1 ${errors.college ? 'text-red-500' : 'text-gray-700'}`}>College / University *</label>
-                  <select
+                  <input
+                    type="text"
                     name="college"
+                    list="college-list"
                     value={formData.college}
                     onChange={handleChange}
+                    placeholder="Enter your College / University"
                     className={`w-full px-4 py-2 bg-gray-50 border rounded-lg focus:outline-none text-sm text-gray-900 transition-colors ${errors.college ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-gray-200 focus:ring-1 focus:ring-orange-500'}`}
-                  >
-                    <option value="">Select College</option>
-                    {colleges.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  />
+                  <datalist id="college-list">
+                    {colleges.filter(c => c !== "Other").map((c, i) => (
+                      <option key={i} value={c} />
+                    ))}
+                  </datalist>
                 </div>
                 <div>
                   <label className={`block text-xs font-semibold mb-1 ${errors.city ? 'text-red-500' : 'text-gray-700'}`}>City *</label>
-                  <select
+                  <input
+                    type="text"
                     name="city"
+                    list="city-list"
                     value={formData.city}
                     onChange={handleChange}
+                    placeholder="Enter your City"
                     className={`w-full px-4 py-2 bg-gray-50 border rounded-lg focus:outline-none text-sm text-gray-900 transition-colors ${errors.city ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-gray-200 focus:ring-1 focus:ring-orange-500'}`}
-                  >
-                    <option value="">Select City</option>
-                    {cities.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  />
+                  <datalist id="city-list">
+                    {cities.filter(c => c !== "Other").map((c, i) => (
+                      <option key={i} value={c} />
+                    ))}
+                  </datalist>
                 </div>
               </div>
 
@@ -522,6 +603,80 @@ const Offer = ({
                 )}
               </div>
               
+              {/* Terms & Conditions Section */}
+              <div className="bg-gray-50 border border-gray-200/80 rounded-xl p-3.5 space-y-2.5 text-left">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                    <FaShieldAlt className="text-orange-500 text-xs" /> Terms &amp; Conditions &amp; Course Policies
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowTermsModal(true)}
+                    className="text-[11px] text-orange-600 hover:underline font-bold cursor-pointer bg-transparent border-none"
+                  >
+                    View Full Terms
+                  </button>
+                </div>
+
+                {/* Scrollable Terms List */}
+                <div className="bg-white border border-gray-200 rounded-lg p-3 max-h-36 overflow-y-auto text-[11px] text-gray-600 space-y-2 font-medium leading-relaxed shadow-inner">
+                  <p className="flex items-start gap-1.5">
+                    <span className="text-orange-500 font-bold shrink-0">•</span>
+                    <span>100% Job Assistance will be provided to eligible students; however, it does not guarantee employment.</span>
+                  </p>
+                  <p className="flex items-start gap-1.5">
+                    <span className="text-orange-500 font-bold shrink-0">•</span>
+                    <span>Course fees are non-refundable and non-transferable after registration.</span>
+                  </p>
+                  <p className="flex items-start gap-1.5">
+                    <span className="text-orange-500 font-bold shrink-0">•</span>
+                    <span>Students must maintain a minimum of 90% attendance to be eligible for the Course Completion Certificate.</span>
+                  </p>
+                  <p className="flex items-start gap-1.5">
+                    <span className="text-orange-500 font-bold shrink-0">•</span>
+                    <span>The Course Completion Certificate will be issued by BeanGate IT Solutions Private Limited upon successful completion of the course requirements.</span>
+                  </p>
+                  <p className="flex items-start gap-1.5">
+                    <span className="text-orange-500 font-bold shrink-0">•</span>
+                    <span>Certificate issuance is subject to meeting the required attendance, assignments, projects, and course completion criteria.</span>
+                  </p>
+                  <p className="flex items-start gap-1.5">
+                    <span className="text-orange-500 font-bold shrink-0">•</span>
+                    <span><strong>Internship Opportunity:</strong> After successful completion of the course, students who demonstrate the required technical skills, performance, and ability to contribute to live projects may be selected by BeanGate IT Solutions Private Limited for a 3-month internship. Internship selection will be based solely on the company's evaluation and requirements and is not guaranteed for every student.</span>
+                  </p>
+                  <p className="flex items-start gap-1.5">
+                    <span className="text-orange-500 font-bold shrink-0">•</span>
+                    <span>Students are expected to maintain professional and respectful behavior with trainers and other team members/developers. In case of misconduct or violation of professional standards, BeanGate IT Solutions Private Limited reserves the right to discontinue the student's classes/course participation without refund of the course fee.</span>
+                  </p>
+                  <p className="flex items-start gap-1.5">
+                    <span className="text-orange-500 font-bold shrink-0">•</span>
+                    <span>Job assistance will be provided based on the student's skills, performance, and eligibility.</span>
+                  </p>
+                </div>
+
+                {/* Checkbox */}
+                <label className="flex items-start gap-2.5 cursor-pointer pt-1">
+                  <input
+                    type="checkbox"
+                    checked={agreeTerms}
+                    onChange={(e) => {
+                      setAgreeTerms(e.target.checked);
+                      if (e.target.checked) setTermsError(false);
+                    }}
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500 shrink-0 cursor-pointer"
+                  />
+                  <span className="text-xs font-semibold text-gray-800 leading-tight">
+                    I have read and agree to all the <span className="text-orange-600 font-bold">Terms &amp; Conditions</span> and policies *
+                  </span>
+                </label>
+
+                {termsError && (
+                  <p className="text-red-500 text-xs font-bold pt-1">
+                    ⚠️ Please check and agree to the Terms &amp; Conditions before proceeding.
+                  </p>
+                )}
+              </div>
+              
               <button
                 type="submit"
                 className="w-full bg-primary-orange text-white py-3.5 rounded-xl font-extrabold hover:bg-orange-600 transition shadow-md shadow-orange-500/10 cursor-pointer"
@@ -537,6 +692,86 @@ const Offer = ({
           
         </div>
       </div>
+
+      {/* FULL TERMS MODAL LIGHTBOX */}
+      {showTermsModal && (
+        <div
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md"
+          onClick={() => setShowTermsModal(false)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] p-6 sm:p-8 shadow-2xl flex flex-col justify-between border border-gray-200 text-left relative overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowTermsModal(false)}
+              className="absolute top-4 right-4 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-red-500 hover:text-white transition duration-200 cursor-pointer border-none shadow-md"
+            >
+              <FaTimes size={16} />
+            </button>
+
+            <div className="mb-4">
+              <h3 className="text-xl font-black text-gray-900 flex items-center gap-2">
+                <FaShieldAlt className="text-orange-500" /> Terms &amp; Conditions and Course Policies
+              </h3>
+              <p className="text-xs text-gray-500 font-medium mt-1">
+                BeanGate IT Solutions Private Limited — Student Agreement
+              </p>
+            </div>
+
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 overflow-y-auto max-h-[55vh] text-xs text-gray-700 space-y-3 font-medium leading-relaxed my-2">
+              <p className="flex items-start gap-2">
+                <span className="text-orange-500 font-bold shrink-0">•</span>
+                <span><strong>1. Job Assistance:</strong> 100% Job Assistance will be provided to eligible students; however, it does not guarantee employment.</span>
+              </p>
+              <p className="flex items-start gap-2">
+                <span className="text-orange-500 font-bold shrink-0">•</span>
+                <span><strong>2. Refund Policy:</strong> Course fees are non-refundable and non-transferable after registration.</span>
+              </p>
+              <p className="flex items-start gap-2">
+                <span className="text-orange-500 font-bold shrink-0">•</span>
+                <span><strong>3. Attendance Requirement:</strong> Students must maintain a minimum of 90% attendance to be eligible for the Course Completion Certificate.</span>
+              </p>
+              <p className="flex items-start gap-2">
+                <span className="text-orange-500 font-bold shrink-0">•</span>
+                <span><strong>4. Certificate Authority:</strong> The Course Completion Certificate will be issued by BeanGate IT Solutions Private Limited upon successful completion of the course requirements.</span>
+              </p>
+              <p className="flex items-start gap-2">
+                <span className="text-orange-500 font-bold shrink-0">•</span>
+                <span><strong>5. Certificate Criteria:</strong> Certificate issuance is subject to meeting the required attendance, assignments, projects, and course completion criteria.</span>
+              </p>
+              <p className="flex items-start gap-2">
+                <span className="text-orange-500 font-bold shrink-0">•</span>
+                <span><strong>6. Internship Opportunity:</strong> After successful completion of the course, students who demonstrate the required technical skills, performance, and ability to contribute to live projects may be selected by BeanGate IT Solutions Private Limited for a 3-month internship. Internship selection will be based solely on the company's evaluation and requirements and is not guaranteed for every student.</span>
+              </p>
+              <p className="flex items-start gap-2">
+                <span className="text-orange-500 font-bold shrink-0">•</span>
+                <span><strong>7. Code of Conduct:</strong> Students are expected to maintain professional and respectful behavior with trainers and other team members/developers. In case of misconduct or violation of professional standards, BeanGate IT Solutions Private Limited reserves the right to discontinue the student's classes/course participation without refund of the course fee.</span>
+              </p>
+              <p className="flex items-start gap-2">
+                <span className="text-orange-500 font-bold shrink-0">•</span>
+                <span><strong>8. Eligibility:</strong> Job assistance will be provided based on the student's skills, performance, and eligibility.</span>
+              </p>
+            </div>
+
+            <div className="pt-4 border-t border-gray-200 flex items-center justify-between gap-3">
+              <span className="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                <FaCheckCircle /> Official BeanGate Policy Document
+              </span>
+              <button
+                onClick={() => {
+                  setAgreeTerms(true);
+                  setTermsError(false);
+                  setShowTermsModal(false);
+                }}
+                className="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl cursor-pointer border-none transition shadow-md"
+              >
+                I Agree &amp; Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

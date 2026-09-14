@@ -60,7 +60,12 @@ const initializeDBData = async () => {
         colleges: ["PDPS College", "BUIT", "Other"],
         cities: ["Bhopal", "Indore", "Jabalpur", "Other"],
         totalSeats: 50,
-        manualSeatsOffset: 32
+        manualSeatsOffset: 32,
+        whatsappNumber: "919876543210",
+        whatsappMessage: "Hello BeanGate IT Solutions, I am interested in the MERN Stack Course!",
+        whatsappEnabled: true,
+        whatsappLabel: "Need Help? Chat with us",
+        whatsappPosition: "bottom-right"
       });
     } else {
       // Check if existing configuration is missing courses, colleges or cities arrays
@@ -106,6 +111,74 @@ const initializeDBData = async () => {
         }
         if (existing.installment2DiscountPercent === undefined) {
           existing.installment2DiscountPercent = existing.discountPercent ?? 10;
+          updated = true;
+        }
+        if (!existing.batchStartDate) {
+          existing.batchStartDate = "21 September 2026";
+          updated = true;
+        }
+        if (existing.offerTimerHours === undefined) {
+          existing.offerTimerHours = 4;
+          updated = true;
+        }
+        if (!existing.offerTimerMode) {
+          existing.offerTimerMode = "daily";
+          updated = true;
+        }
+        if (!existing.whatsappNumber) {
+          existing.whatsappNumber = "919876543210";
+          updated = true;
+        }
+        if (!existing.whatsappMessage) {
+          existing.whatsappMessage = "Hello BeanGate IT Solutions, I am interested in the MERN Stack Course!";
+          updated = true;
+        }
+        if (existing.whatsappEnabled === undefined) {
+          existing.whatsappEnabled = true;
+          updated = true;
+        }
+        if (!existing.whatsappLabel) {
+          existing.whatsappLabel = "Need Help? Chat with us";
+          updated = true;
+        }
+        if (!existing.whatsappPosition) {
+          existing.whatsappPosition = "bottom-right";
+          updated = true;
+        }
+        if (!existing.whatsappType) {
+          existing.whatsappType = "number";
+          updated = true;
+        }
+        if (existing.whatsappGroupLink === undefined) {
+          existing.whatsappGroupLink = "";
+          updated = true;
+        }
+        if (!existing.contactPhone) {
+          existing.contactPhone = "+91 9752740090, 7471112020";
+          updated = true;
+        }
+        if (!existing.contactEmail) {
+          existing.contactEmail = "beangate.official@gmail.com";
+          updated = true;
+        }
+        if (!existing.contactAddress) {
+          existing.contactAddress = "BeanGate IT Solutions Pvt. Ltd.\nFlat No. A-4/501, Kokta Transport Nagar,\nBhopal (M.P.) – 462022";
+          updated = true;
+        }
+        if (existing.facebookUrl === undefined) {
+          existing.facebookUrl = "";
+          updated = true;
+        }
+        if (existing.instagramUrl === undefined) {
+          existing.instagramUrl = "";
+          updated = true;
+        }
+        if (existing.youtubeUrl === undefined) {
+          existing.youtubeUrl = "";
+          updated = true;
+        }
+        if (existing.linkedinUrl === undefined) {
+          existing.linkedinUrl = "";
           updated = true;
         }
         if (updated) {
@@ -252,6 +325,37 @@ app.delete('/api/refcodes/:id', async (req, res) => {
 });
 
 // 4. Plan Config
+const saveOrUpdatePlanConfig = async (req, res) => {
+  try {
+    let targetId = req.params.id;
+    let existing = null;
+    if (targetId) {
+      existing = await PlanConfig.findById(targetId);
+    }
+    if (!existing) {
+      existing = await PlanConfig.findOne();
+    }
+    if (existing) {
+      const bodyOffset = req.body.manualSeatsOffset !== undefined ? Number(req.body.manualSeatsOffset) : undefined;
+      const bodyCapacity = req.body.totalSeats !== undefined ? Number(req.body.totalSeats) : undefined;
+      const offsetChanged = bodyOffset !== undefined && bodyOffset !== existing.manualSeatsOffset;
+      const capacityChanged = bodyCapacity !== undefined && bodyCapacity !== existing.totalSeats;
+      if (offsetChanged || capacityChanged || existing.manualSeatsOffsetRegistrationsCount === undefined) {
+        req.body.seatsOffsetUpdatedAt = new Date();
+        const regCount = await Registration.countDocuments();
+        req.body.manualSeatsOffsetRegistrationsCount = regCount;
+      }
+      const updated = await PlanConfig.findByIdAndUpdate(existing._id, req.body, { new: true, runValidators: true });
+      return res.json(updated);
+    }
+    const saved = await PlanConfig.create(req.body);
+    return res.status(201).json(saved);
+  } catch (error) {
+    console.error("Error saving plan config:", error);
+    return res.status(400).json({ message: error.message });
+  }
+};
+
 app.get('/api/planconfig', async (req, res) => {
   try {
     const data = await PlanConfig.findOne();
@@ -259,45 +363,8 @@ app.get('/api/planconfig', async (req, res) => {
   } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
-app.post('/api/planconfig', async (req, res) => {
-  try {
-    const existing = await PlanConfig.findOne();
-    if (existing) {
-      const updated = await PlanConfig.findByIdAndUpdate(existing._id, req.body, { new: true });
-      return res.json(updated);
-    }
-    const saved = await PlanConfig.create(req.body);
-    res.status(201).json(saved);
-  } catch (error) { res.status(400).json({ message: error.message }); }
-});
-
-app.put('/api/planconfig/:id?', async (req, res) => {
-  try {
-    let targetId = req.params.id;
-    if (!targetId) {
-      const existing = await PlanConfig.findOne();
-      if (existing) targetId = existing._id;
-    }
-    if (targetId) {
-      const current = await PlanConfig.findById(targetId);
-      if (current) {
-        const bodyOffset = req.body.manualSeatsOffset !== undefined ? Number(req.body.manualSeatsOffset) : undefined;
-        const bodyCapacity = req.body.totalSeats !== undefined ? Number(req.body.totalSeats) : undefined;
-        const offsetChanged = bodyOffset !== undefined && bodyOffset !== current.manualSeatsOffset;
-        const capacityChanged = bodyCapacity !== undefined && bodyCapacity !== current.totalSeats;
-        if (offsetChanged || capacityChanged || current.manualSeatsOffsetRegistrationsCount === undefined) {
-          req.body.seatsOffsetUpdatedAt = new Date();
-          const regCount = await Registration.countDocuments();
-          req.body.manualSeatsOffsetRegistrationsCount = regCount;
-        }
-      }
-      const updated = await PlanConfig.findByIdAndUpdate(targetId, req.body, { new: true, upsert: true });
-      return res.json(updated);
-    }
-    const created = await PlanConfig.create(req.body);
-    res.json(created);
-  } catch (error) { res.status(400).json({ message: error.message }); }
-});
+app.post('/api/planconfig/:id?', saveOrUpdatePlanConfig);
+app.put('/api/planconfig/:id?', saveOrUpdatePlanConfig);
 
 // 5. Sub-Admins
 app.get('/api/subadmins', async (req, res) => {

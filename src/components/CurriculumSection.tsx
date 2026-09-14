@@ -209,12 +209,12 @@ const CurriculumSection = () => {
 
       {/* DETAILED CURRICULUM MODAL */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-fade-in">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
           
-          <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-gray-100">
+          <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col shadow-2xl border border-gray-100 my-auto">
             
             {/* Modal Header */}
-            <div className="px-6 py-5 bg-slate-900 text-white flex items-center justify-between border-b border-white/10">
+            <div className="px-6 py-5 bg-slate-900 text-white flex items-center justify-between border-b border-white/10 shrink-0">
               <div>
                 <h3 className="text-lg sm:text-xl font-black tracking-tight text-white">
                   BeanGate MERN Stack Complete Syllabus
@@ -231,13 +231,16 @@ const CurriculumSection = () => {
               </button>
             </div>
 
-            {/* Modal Scrollable Content */}
-            <div className="p-6 overflow-y-auto space-y-6 text-left">
-              <div className="grid sm:grid-cols-2 gap-6">
+            {/* Modal Scrollable Content with Lenis prevention & flex scroll */}
+            <div
+              data-lenis-prevent
+              className="p-5 sm:p-6 overflow-y-auto space-y-6 text-left flex-1 min-h-0 max-h-[60vh] sm:max-h-[65vh]"
+            >
+              <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
                 {curriculumSteps.map((step, idx) => (
-                  <div key={idx} className="bg-gray-50 border border-gray-200/80 rounded-2xl p-5 space-y-3">
+                  <div key={idx} className="bg-gray-50 border border-gray-200/80 rounded-2xl p-4 sm:p-5 space-y-3">
                     <div className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-lg bg-orange-500 text-white font-black text-xs flex items-center justify-center shrink-0">
+                      <span className="w-8 h-8 rounded-lg bg-orange-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
                         {step.num}
                       </span>
                       <h4 className="font-extrabold text-gray-900 text-sm">
@@ -259,7 +262,7 @@ const CurriculumSection = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200/80 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
               <p className="text-xs text-gray-500 font-medium">
                 Want to enroll in the live batch? Reserve your seat now!
               </p>

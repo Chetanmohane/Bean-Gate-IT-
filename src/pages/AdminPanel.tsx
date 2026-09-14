@@ -5,7 +5,7 @@ import {
   FaChartBar, FaCheckCircle, FaClock, FaSearch,
   FaEye, FaEyeSlash, FaPlus, FaTrash, FaCopy,
   FaBars, FaTimes, FaShieldAlt, FaDatabase,
-  FaSun, FaMoon, FaChevronDown, FaChevronUp, FaLink, FaEdit, FaArrowLeft
+  FaSun, FaMoon, FaChevronDown, FaChevronUp, FaLink, FaEdit, FaArrowLeft, FaWhatsapp
 } from "react-icons/fa";
 import { ThemeContext } from "../contexts/ThemeContext";
 import Card from "../components/ui/Card";
@@ -73,6 +73,24 @@ interface PlanConfig {
   cities?: string[];
   totalSeats?: number;
   manualSeatsOffset?: number;
+  batchStartDate?: string;
+  offerTimerHours?: number;
+  offerTimerMode?: string;
+  offerTargetDate?: string;
+  whatsappNumber?: string;
+  whatsappMessage?: string;
+  whatsappEnabled?: boolean;
+  whatsappLabel?: string;
+  whatsappPosition?: string;
+  whatsappType?: string;
+  whatsappGroupLink?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  contactAddress?: string;
+  facebookUrl?: string;
+  instagramUrl?: string;
+  youtubeUrl?: string;
+  linkedinUrl?: string;
 }
 
 const DEFAULT_PLAN_CONFIG: PlanConfig = {
@@ -105,6 +123,24 @@ const DEFAULT_PLAN_CONFIG: PlanConfig = {
   cities: ["Bhopal", "Indore", "Jabalpur", "Other"],
   totalSeats: 50,
   manualSeatsOffset: 32,
+  batchStartDate: "21 September 2026",
+  offerTimerHours: 4,
+  offerTimerMode: "daily",
+  offerTargetDate: "",
+  whatsappNumber: "919876543210",
+  whatsappMessage: "Hello BeanGate IT Solutions, I am interested in the MERN Stack Course!",
+  whatsappEnabled: true,
+  whatsappLabel: "Need Help? Chat with us",
+  whatsappPosition: "bottom-right",
+  whatsappType: "number",
+  whatsappGroupLink: "",
+  contactPhone: "+91 9752740090, 7471112020",
+  contactEmail: "beangate.official@gmail.com",
+  contactAddress: "BeanGate IT Solutions Pvt. Ltd.\nFlat No. A-4/501, Kokta Transport Nagar,\nBhopal (M.P.) – 462022",
+  facebookUrl: "",
+  instagramUrl: "",
+  youtubeUrl: "",
+  linkedinUrl: "",
 };
 
 const loadPlanConfig = (): PlanConfig => {
@@ -114,8 +150,13 @@ const loadPlanConfig = (): PlanConfig => {
   } catch { return DEFAULT_PLAN_CONFIG; }
 };
 
-const savePlanConfig = (cfg: PlanConfig) =>
+const savePlanConfig = (cfg: PlanConfig) => {
   localStorage.setItem("bg_plan_config", JSON.stringify(cfg));
+  try {
+    window.dispatchEvent(new Event("bg_config_updated"));
+    window.dispatchEvent(new Event("storage"));
+  } catch (e) {}
+};
 
 // ─── Admin Credentials (Simple static auth — change as needed) ─────────
 const ADMIN_USER = "chetanmohane27@gmail.com";
@@ -413,7 +454,7 @@ const PlansTab = () => {
       });
   }, []);
 
-  const update = (key: keyof PlanConfig, value: string | number | string[]) =>
+  const update = (key: keyof PlanConfig, value: string | number | boolean | string[]) =>
     setCfg(prev => ({ ...prev, [key]: value }));
 
   const updateFeature = (plan: "oneTimeFeatures" | "installmentFeatures", idx: number, val: string) => {
@@ -445,6 +486,13 @@ const PlansTab = () => {
       if (res.ok) {
         const savedData = await res.json();
         if (savedData && savedData._id) setDbId(savedData._id);
+        if (savedData && typeof savedData === "object") {
+          const merged = { ...cfg, ...savedData };
+          setCfg(merged);
+          savePlanConfig(merged);
+        }
+      } else {
+        console.error("Backend API save failed with status:", res.status);
       }
     } catch (e) {
       console.warn("Backend sync failed, config saved locally.", e);
@@ -485,8 +533,8 @@ const PlansTab = () => {
 
       {/* Course Info */}
       <Card className="p-6 mb-6 mt-6">
-        <p className="text-sm font-extrabold text-slate-800 dark:text-white mb-4">Course Information</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <p className="text-sm font-extrabold text-slate-800 dark:text-white mb-4">Course Information & Popup Banner Date</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <div>
             <label className={labelCls}>Course Name</label>
             <input className={inputCls} value={cfg.courseName} onChange={e => update("courseName", e.target.value)} placeholder="e.g. MERN Stack" />
@@ -499,6 +547,50 @@ const PlansTab = () => {
             <label className={labelCls}>Hero Special Offer Price (₹)</label>
             <input type="number" min="0" className={inputCls} value={cfg.heroOfferPrice} onChange={e => update("heroOfferPrice", parseInt(e.target.value) || 0)} />
           </div>
+        </div>
+
+        {/* Popup Batch Starts Date with Calendar Picker */}
+        <div className="bg-orange-500/5 p-4 rounded-2xl border border-orange-500/20">
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <label className={labelCls + " text-orange-600 dark:text-orange-400 mb-0"}>
+              🚀 Popup Batch Starts Date (Calendar Picker + Custom Text)
+            </label>
+            <span className="text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-500/10 px-2.5 py-1 rounded-md border border-orange-500/20">
+              Current Setting: {cfg.batchStartDate ?? "21 September 2026"}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1.5">
+                📅 Pick Date from Calendar
+              </label>
+              <input
+                type="date"
+                className={inputCls}
+                onChange={e => {
+                  if (e.target.value) {
+                    const d = new Date(e.target.value + "T00:00:00");
+                    const formatted = d.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+                    update("batchStartDate", formatted);
+                  }
+                }}
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1.5">
+                ✍️ Edit Formatted Display Text
+              </label>
+              <input
+                className={inputCls}
+                value={cfg.batchStartDate ?? "21 September 2026"}
+                onChange={e => update("batchStartDate", e.target.value)}
+                placeholder="e.g. 21 September 2026"
+              />
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-400 mt-2 font-medium">
+            Selecting a date from the calendar automatically fills the formatted date text (e.g. "21 September 2026"). You can also edit the text manually.
+          </p>
         </div>
       </Card>
 
@@ -564,6 +656,374 @@ const PlansTab = () => {
             <label className={labelCls}>Initial Seats Left (Manual Offset)</label>
             <input type="number" min="0" className={inputCls} value={cfg.manualSeatsOffset ?? 32} onChange={e => update("manualSeatsOffset", parseInt(e.target.value) || 0)} placeholder="e.g. 32" />
             <p className="text-xs text-slate-400 mt-1 font-medium">Set the initial seats left. Website count will show this value minus registered students.</p>
+          </div>
+        </div>
+      </Card>
+
+      {/* Special Offer Countdown Timer Settings */}
+      <Card className="p-6 mb-6">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <p className="text-sm font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
+            ⏳ Special Offer Countdown Timer Settings
+          </p>
+          {cfg.offerTargetDate && (
+            <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+              Target Set: {new Date(cfg.offerTargetDate).toLocaleString("en-IN")}
+            </span>
+          )}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
+          <div>
+            <label className={labelCls}>Timer Countdown Mode</label>
+            <select
+              className={inputCls}
+              value={cfg.offerTimerMode || (cfg.offerTargetDate ? "target_date" : "daily")}
+              onChange={e => update("offerTimerMode", e.target.value)}
+            >
+              <option value="target_date">Target End Date &amp; Time (Specific Date)</option>
+              <option value="daily">Auto-Reset Daily (Midnight 23:59:59)</option>
+              <option value="hours">Custom Fixed Hours (e.g. 4 Hours)</option>
+            </select>
+          </div>
+          <div>
+            <label className={labelCls}>Fixed Countdown Hours</label>
+            <input
+              type="number"
+              min="1"
+              max="72"
+              className={inputCls}
+              value={cfg.offerTimerHours ?? 4}
+              onChange={e => update("offerTimerHours", parseInt(e.target.value) || 4)}
+              placeholder="e.g. 4"
+            />
+            <p className="text-xs text-slate-400 mt-1 font-medium">Used when mode is 'Custom Fixed Hours'.</p>
+          </div>
+          <div>
+            <label className={labelCls + " text-indigo-600 dark:text-indigo-400"}>Target End Date &amp; Time</label>
+            <input
+              type="datetime-local"
+              className={inputCls + " border-indigo-500/30 focus:border-indigo-500"}
+              value={cfg.offerTargetDate || ""}
+              onChange={e => {
+                const val = e.target.value;
+                update("offerTargetDate", val);
+                if (val) {
+                  update("offerTimerMode", "target_date");
+                }
+              }}
+            />
+            <p className="text-xs text-slate-400 mt-1 font-medium">Selecting a date auto-activates Target Date Mode.</p>
+          </div>
+        </div>
+
+        <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+          <span className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+            Active Countdown Mode: <span className="text-indigo-600 dark:text-indigo-400 uppercase font-extrabold">{cfg.offerTimerMode || (cfg.offerTargetDate ? "target_date" : "daily")}</span>
+          </span>
+          {cfg.offerTargetDate && (
+            <span className="text-emerald-600 dark:text-emerald-400 font-mono">
+              Target: {cfg.offerTargetDate.replace("T", " ")}
+            </span>
+          )}
+        </div>
+      </Card>
+
+      {/* Floating WhatsApp Button Settings */}
+      <Card className="p-6 mb-6 border-2 border-emerald-500/20 bg-emerald-500/5">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-xl shadow-md">
+              <FaWhatsapp />
+            </div>
+            <div>
+              <p className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                💬 Floating WhatsApp Button Settings
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                Choose between Direct Phone Chat OR WhatsApp Group Invite Link.
+              </p>
+            </div>
+          </div>
+
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              className="sr-only peer"
+              checked={cfg.whatsappEnabled !== false}
+              onChange={e => update("whatsappEnabled", e.target.checked)}
+            />
+            <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"></div>
+            <span className="ml-2.5 text-xs font-bold text-slate-700 dark:text-slate-200">
+              {cfg.whatsappEnabled !== false ? "WhatsApp Button Enabled" : "Disabled"}
+            </span>
+          </label>
+        </div>
+
+        {/* Action Type Selector */}
+        <div className="mb-4 bg-white dark:bg-slate-900/60 p-3 rounded-xl border border-emerald-500/20">
+          <label className={labelCls + " text-emerald-600 dark:text-emerald-400 mb-2"}>
+            🎯 WhatsApp Button Action Mode
+          </label>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => update("whatsappType", "number")}
+              className={`px-4 py-2 rounded-lg text-xs font-extrabold transition cursor-pointer border flex items-center gap-2 ${
+                (cfg.whatsappType || "number") === "number"
+                  ? "bg-emerald-500 text-white border-emerald-600 shadow-md"
+                  : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10"
+              }`}
+            >
+              <span>📱 Direct Chat Number</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => update("whatsappType", "group")}
+              className={`px-4 py-2 rounded-lg text-xs font-extrabold transition cursor-pointer border flex items-center gap-2 ${
+                cfg.whatsappType === "group"
+                  ? "bg-emerald-500 text-white border-emerald-600 shadow-md"
+                  : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10"
+              }`}
+            >
+              <span>👥 WhatsApp Group Invite Link</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          {/* Conditional Input based on Action Type */}
+          {(cfg.whatsappType || "number") === "group" ? (
+            <div className="sm:col-span-2">
+              <label className={labelCls + " text-indigo-600 dark:text-indigo-400"}>👥 WhatsApp Group Invite Link</label>
+              <input
+                className={inputCls}
+                value={cfg.whatsappGroupLink ?? ""}
+                onChange={e => update("whatsappGroupLink", e.target.value)}
+                placeholder="e.g. https://chat.whatsapp.com/ExAmPlELiNk123"
+              />
+              <p className="text-[11px] text-slate-400 mt-1 font-medium">Enter full group link (https://chat.whatsapp.com/...)</p>
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className={labelCls}>WhatsApp Phone Number</label>
+                <input
+                  className={inputCls}
+                  value={cfg.whatsappNumber ?? "919876543210"}
+                  onChange={e => update("whatsappNumber", e.target.value)}
+                  placeholder="e.g. 919876543210"
+                />
+                <p className="text-[11px] text-slate-400 mt-1 font-medium">Country code without + (e.g. 919876543210)</p>
+              </div>
+
+              <div>
+                <label className={labelCls}>Pre-filled Message</label>
+                <input
+                  className={inputCls}
+                  value={cfg.whatsappMessage ?? "Hello BeanGate IT Solutions, I am interested in the MERN Stack Course!"}
+                  onChange={e => update("whatsappMessage", e.target.value)}
+                  placeholder="Pre-filled text..."
+                />
+                <p className="text-[11px] text-slate-400 mt-1 font-medium">Auto-populates on chat start</p>
+              </div>
+            </>
+          )}
+
+          <div>
+            <label className={labelCls}>Tooltip / Hint Text</label>
+            <input
+              className={inputCls}
+              value={cfg.whatsappLabel ?? ((cfg.whatsappType || "number") === "group" ? "Join WhatsApp Group" : "Need Help? Chat with us")}
+              onChange={e => update("whatsappLabel", e.target.value)}
+              placeholder="e.g. Join WhatsApp Group"
+            />
+            <p className="text-[11px] text-slate-400 mt-1 font-medium">Appears in floating badge</p>
+          </div>
+
+          <div>
+            <label className={labelCls}>Fixed Button Position</label>
+            <select
+              className={inputCls}
+              value={cfg.whatsappPosition || "bottom-right"}
+              onChange={e => update("whatsappPosition", e.target.value)}
+            >
+              <option value="bottom-right">Bottom Right (Standard)</option>
+              <option value="bottom-left">Bottom Left</option>
+            </select>
+            <p className="text-[11px] text-slate-400 mt-1 font-medium">Screen corner alignment</p>
+          </div>
+        </div>
+
+        {/* Live Admin Preview */}
+        <div className="bg-white/80 dark:bg-slate-900/80 border border-emerald-500/20 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs font-bold text-slate-700 dark:text-slate-300">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+            <span className="shrink-0">Active Target URL:</span>
+            {cfg.whatsappType === "group" ? (
+              <a
+                href={cfg.whatsappGroupLink ? (cfg.whatsappGroupLink.startsWith("http") ? cfg.whatsappGroupLink : `https://chat.whatsapp.com/${cfg.whatsappGroupLink}`) : "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-600 dark:text-emerald-400 underline font-mono text-[11px] truncate max-w-[320px]"
+              >
+                {cfg.whatsappGroupLink || "No Group Link Set"}
+              </a>
+            ) : (
+              <a
+                href={`https://wa.me/${(cfg.whatsappNumber || "919876543210").replace(/[^0-9]/g, "")}?text=${encodeURIComponent(cfg.whatsappMessage || "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-600 dark:text-emerald-400 underline font-mono text-[11px] truncate max-w-[320px]"
+              >
+                wa.me/{(cfg.whatsappNumber || "919876543210").replace(/[^0-9]/g, "")}
+              </a>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400 text-[11px]">Mode:</span>
+            <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-md uppercase text-[10px] font-extrabold">
+              {cfg.whatsappType === "group" ? "Group Link" : "Direct Number"}
+            </span>
+          </div>
+        </div>
+      </Card>
+
+      {/* Website Footer Contact Information Settings */}
+      <Card className="p-6 mb-6 border-2 border-blue-500/20 bg-blue-500/5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xl shadow-md">
+            <FaLink />
+          </div>
+          <div>
+            <p className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+              📍 Website Footer Contact Information Settings
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+              Edit phone numbers, email ID, and office address displayed in the website footer.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className={labelCls}>Contact Phone Numbers</label>
+            <input
+              className={inputCls}
+              value={cfg.contactPhone ?? "+91 9752740090, 7471112020"}
+              onChange={e => update("contactPhone", e.target.value)}
+              placeholder="e.g. +91 9752740090, 7471112020"
+            />
+            <p className="text-[11px] text-slate-400 mt-1 font-medium">Displayed next to phone icon in footer</p>
+          </div>
+
+          <div>
+            <label className={labelCls}>Contact Email ID</label>
+            <input
+              className={inputCls}
+              value={cfg.contactEmail ?? "beangate.official@gmail.com"}
+              onChange={e => update("contactEmail", e.target.value)}
+              placeholder="e.g. beangate.official@gmail.com"
+            />
+            <p className="text-[11px] text-slate-400 mt-1 font-medium">Displayed next to mail icon in footer</p>
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className={labelCls}>Office Address</label>
+            <textarea
+              rows={2}
+              className={inputCls + " font-mono text-xs"}
+              value={cfg.contactAddress ?? "BeanGate IT Solutions Pvt. Ltd.\nFlat No. A-4/501, Kokta Transport Nagar,\nBhopal (M.P.) – 462022"}
+              onChange={e => update("contactAddress", e.target.value)}
+              placeholder="Enter complete office address..."
+            />
+            <p className="text-[11px] text-slate-400 mt-1 font-medium">Displayed next to map marker icon in footer (Supports newlines)</p>
+          </div>
+        </div>
+
+        <div className="bg-white/80 dark:bg-slate-900/80 border border-blue-500/20 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs font-bold text-slate-700 dark:text-slate-300">
+          <span className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+            Phone: <span className="text-slate-900 dark:text-white font-extrabold">{cfg.contactPhone || "+91 9752740090"}</span>
+          </span>
+          <span className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+            Email: <span className="text-slate-900 dark:text-white font-extrabold">{cfg.contactEmail || "beangate.official@gmail.com"}</span>
+          </span>
+        </div>
+      </Card>
+
+      {/* Footer Social Media Links Settings */}
+      <Card className="p-6 mb-6 border-2 border-purple-500/20 bg-purple-500/5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center text-xl shadow-md">
+            <FaLink />
+          </div>
+          <div>
+            <p className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+              🌐 Website Footer Social Media Links Settings
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+              Enter social media profile URLs to make footer social icons clickable.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className={labelCls + " text-blue-600 dark:text-blue-400"}>Facebook Page URL</label>
+            <input
+              className={inputCls}
+              value={cfg.facebookUrl ?? ""}
+              onChange={e => update("facebookUrl", e.target.value)}
+              placeholder="e.g. https://facebook.com/beangate"
+            />
+            <p className="text-[11px] text-slate-400 mt-1 font-medium">Full Facebook page link</p>
+          </div>
+
+          <div>
+            <label className={labelCls + " text-pink-600 dark:text-pink-400"}>Instagram Profile URL</label>
+            <input
+              className={inputCls}
+              value={cfg.instagramUrl ?? ""}
+              onChange={e => update("instagramUrl", e.target.value)}
+              placeholder="e.g. https://instagram.com/beangate.official"
+            />
+            <p className="text-[11px] text-slate-400 mt-1 font-medium">Full Instagram profile link</p>
+          </div>
+
+          <div>
+            <label className={labelCls + " text-red-600 dark:text-red-400"}>YouTube Channel URL</label>
+            <input
+              className={inputCls}
+              value={cfg.youtubeUrl ?? ""}
+              onChange={e => update("youtubeUrl", e.target.value)}
+              placeholder="e.g. https://youtube.com/@beangate"
+            />
+            <p className="text-[11px] text-slate-400 mt-1 font-medium">Full YouTube channel link</p>
+          </div>
+
+          <div>
+            <label className={labelCls + " text-sky-600 dark:text-sky-400"}>LinkedIn Profile URL</label>
+            <input
+              className={inputCls}
+              value={cfg.linkedinUrl ?? ""}
+              onChange={e => update("linkedinUrl", e.target.value)}
+              placeholder="e.g. https://linkedin.com/company/beangate"
+            />
+            <p className="text-[11px] text-slate-400 mt-1 font-medium">Full LinkedIn company/profile link</p>
+          </div>
+        </div>
+
+        <div className="bg-white/80 dark:bg-slate-900/80 border border-purple-500/20 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs font-bold text-slate-700 dark:text-slate-300">
+          <span className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
+            Active Links Configured:
+          </span>
+          <div className="flex gap-2">
+            <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${cfg.facebookUrl ? "bg-blue-500/20 text-blue-600" : "bg-slate-200 text-slate-400"}`}>FB</span>
+            <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${cfg.instagramUrl ? "bg-pink-500/20 text-pink-600" : "bg-slate-200 text-slate-400"}`}>IG</span>
+            <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${cfg.youtubeUrl ? "bg-red-500/20 text-red-600" : "bg-slate-200 text-slate-400"}`}>YT</span>
+            <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${cfg.linkedinUrl ? "bg-sky-500/20 text-sky-600" : "bg-slate-200 text-slate-400"}`}>IN</span>
           </div>
         </div>
       </Card>
@@ -906,6 +1366,8 @@ const ReferralTab = () => {
       });
   }, []);
   const [newCode, setNewCode] = useState("");
+  const [newDiscountPercent, setNewDiscountPercent] = useState<number>(10);
+  const [newApplicablePlan, setNewApplicablePlan] = useState<"all" | "one-time" | "installment">("all");
   const [copied, setCopied] = useState("");
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
@@ -1042,26 +1504,14 @@ const ReferralTab = () => {
       {/* Add Code */}
       <Card className="p-6 mb-6">
         <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold mb-3">Add New Referral Code</p>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <div className="md:col-span-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Code Name</label>
             <input
               type="text"
               placeholder="e.g. SUMMER10 or ONETIME20"
               value={newCode}
               onChange={(e) => setNewCode(e.target.value.toUpperCase())}
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Discount (%)</label>
-            <input
-              type="number"
-              min="1"
-              max="100"
-              value={newDiscountPercent}
-              onChange={(e) => setNewDiscountPercent(parseInt(e.target.value) || 10)}
               className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200"
             />
           </div>

@@ -1,9 +1,79 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaFacebookF, FaInstagram, FaYoutube, FaLinkedinIn, FaPhoneAlt, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
 import logo from "../assets/logo-beangate.png";
 import { Link } from 'react-router-dom';
 
+interface ContactInfo {
+  contactPhone?: string;
+  contactEmail?: string;
+  contactAddress?: string;
+  facebookUrl?: string;
+  instagramUrl?: string;
+  youtubeUrl?: string;
+  linkedinUrl?: string;
+}
+
+const DEFAULT_CONTACT: ContactInfo = {
+  contactPhone: "+91 9752740090, 7471112020",
+  contactEmail: "beangate.official@gmail.com",
+  contactAddress: "BeanGate IT Solutions Pvt. Ltd.\nFlat No. A-4/501, Kokta Transport Nagar,\nBhopal (M.P.) – 462022",
+  facebookUrl: "",
+  instagramUrl: "",
+  youtubeUrl: "",
+  linkedinUrl: "",
+};
+
 const Footer = () => {
+  const [contact, setContact] = useState<ContactInfo>(DEFAULT_CONTACT);
+
+  const fetchContact = () => {
+    try {
+      const s = localStorage.getItem("bg_plan_config");
+      if (s) {
+        const parsed = JSON.parse(s);
+        setContact((prev) => ({ ...prev, ...parsed }));
+      }
+    } catch (e) {}
+
+    fetch("/api/planconfig")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data) {
+          setContact((prev) => ({ ...prev, ...data }));
+          try {
+            const current = localStorage.getItem("bg_plan_config");
+            const existing = current ? JSON.parse(current) : {};
+            localStorage.setItem("bg_plan_config", JSON.stringify({ ...existing, ...data }));
+          } catch (e) {}
+        }
+      })
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    fetchContact();
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "bg_plan_config") {
+        fetchContact();
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("bg_config_updated", fetchContact);
+    window.addEventListener("focus", fetchContact);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("bg_config_updated", fetchContact);
+      window.removeEventListener("focus", fetchContact);
+    };
+  }, []);
+
+  const phoneText = contact.contactPhone || DEFAULT_CONTACT.contactPhone || "";
+  const emailText = contact.contactEmail || DEFAULT_CONTACT.contactEmail || "";
+  const addressText = contact.contactAddress || DEFAULT_CONTACT.contactAddress || "";
+
   return (
     <footer className="bg-navy text-gray-400 pt-16 pb-6">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -22,10 +92,42 @@ const Footer = () => {
               We are dedicated to providing quality training and placement assistance to students and helping them build a successful career in IT industry.
             </p>
             <div className="flex gap-4">
-              <a href="#" className="w-8 h-8 rounded-full border border-gray-700 flex items-center justify-center hover:bg-blue-600 hover:text-white transition"><FaFacebookF size={14}/></a>
-              <a href="#" className="w-8 h-8 rounded-full border border-gray-700 flex items-center justify-center hover:bg-pink-600 hover:text-white transition"><FaInstagram size={14}/></a>
-              <a href="#" className="w-8 h-8 rounded-full border border-gray-700 flex items-center justify-center hover:bg-red-600 hover:text-white transition"><FaYoutube size={14}/></a>
-              <a href="#" className="w-8 h-8 rounded-full border border-gray-700 flex items-center justify-center hover:bg-blue-700 hover:text-white transition"><FaLinkedinIn size={14}/></a>
+              <a
+                href={contact.facebookUrl && contact.facebookUrl.trim() ? (contact.facebookUrl.startsWith("http") ? contact.facebookUrl : `https://${contact.facebookUrl}`) : "#"}
+                target={contact.facebookUrl && contact.facebookUrl.trim() ? "_blank" : "_self"}
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-full border border-gray-700 flex items-center justify-center hover:bg-blue-600 hover:text-white transition cursor-pointer"
+                title="Facebook"
+              >
+                <FaFacebookF size={14}/>
+              </a>
+              <a
+                href={contact.instagramUrl && contact.instagramUrl.trim() ? (contact.instagramUrl.startsWith("http") ? contact.instagramUrl : `https://${contact.instagramUrl}`) : "#"}
+                target={contact.instagramUrl && contact.instagramUrl.trim() ? "_blank" : "_self"}
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-full border border-gray-700 flex items-center justify-center hover:bg-pink-600 hover:text-white transition cursor-pointer"
+                title="Instagram"
+              >
+                <FaInstagram size={14}/>
+              </a>
+              <a
+                href={contact.youtubeUrl && contact.youtubeUrl.trim() ? (contact.youtubeUrl.startsWith("http") ? contact.youtubeUrl : `https://${contact.youtubeUrl}`) : "#"}
+                target={contact.youtubeUrl && contact.youtubeUrl.trim() ? "_blank" : "_self"}
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-full border border-gray-700 flex items-center justify-center hover:bg-red-600 hover:text-white transition cursor-pointer"
+                title="YouTube"
+              >
+                <FaYoutube size={14}/>
+              </a>
+              <a
+                href={contact.linkedinUrl && contact.linkedinUrl.trim() ? (contact.linkedinUrl.startsWith("http") ? contact.linkedinUrl : `https://${contact.linkedinUrl}`) : "#"}
+                target={contact.linkedinUrl && contact.linkedinUrl.trim() ? "_blank" : "_self"}
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-full border border-gray-700 flex items-center justify-center hover:bg-blue-700 hover:text-white transition cursor-pointer"
+                title="LinkedIn"
+              >
+                <FaLinkedinIn size={14}/>
+              </a>
             </div>
           </div>
           
@@ -47,17 +149,18 @@ const Footer = () => {
             <h4 className="text-white font-bold uppercase tracking-wider mb-6">Contact Us</h4>
             <ul className="space-y-4 text-sm">
               <li className="flex items-start gap-3">
-                <FaPhoneAlt className="mt-1 text-blue-500" />
-                <span>+91 9752740090, 7471112020</span>
+                <FaPhoneAlt className="mt-1 text-blue-500 shrink-0" />
+                <span className="whitespace-pre-line">{phoneText}</span>
               </li>
               <li className="flex items-start gap-3">
-                <FaEnvelope className="mt-1 text-blue-500" />
-                <span>beangate.official@gmail.com</span>
+                <FaEnvelope className="mt-1 text-blue-500 shrink-0" />
+                <a href={`mailto:${emailText.split(',')[0].trim()}`} className="hover:text-white transition break-all">
+                  {emailText}
+                </a>
               </li>
               <li className="flex items-start gap-3">
-                <FaMapMarkerAlt className="mt-1 text-blue-500" />
-                <span>BeanGate IT Solutions Pvt. Ltd.<br/> Flat No. A-4/501, Kokta Transport Nagar,<br />
-                Bhopal (M.P.) – 462022</span>
+                <FaMapMarkerAlt className="mt-1 text-blue-500 shrink-0" />
+                <span className="whitespace-pre-line leading-relaxed">{addressText}</span>
               </li>
             </ul>
           </div>
@@ -66,7 +169,7 @@ const Footer = () => {
           <div>
             <h4 className="text-white font-bold uppercase tracking-wider mb-6">Subscribe</h4>
             <p className="text-sm mb-4">Get updates about new batches and special offers.</p>
-            <form className="flex flex-col gap-3">
+            <form className="flex flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
               <input type="email" placeholder="Enter your email" className="bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-md text-sm focus:outline-none focus:border-blue-500" />
               <button type="submit" className="bg-blue-600 text-white font-bold py-2 rounded-md hover:bg-blue-700 transition">SUBSCRIBE</button>
             </form>
@@ -75,7 +178,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-gray-800 pt-6 text-center text-xs">
-          <p>&copy; 2024 BeanGate IT Solutions Pvt. Ltd. All Rights Reserved.</p>
+          <p>&copy; {new Date().getFullYear()} BeanGate IT Solutions Pvt. Ltd. All Rights Reserved.</p>
         </div>
       </div>
     </footer>
