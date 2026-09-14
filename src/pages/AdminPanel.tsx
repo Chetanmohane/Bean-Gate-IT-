@@ -1489,16 +1489,18 @@ const ReferralTab = () => {
 
   const deleteCode = async (idx: number) => {
     const codeObj = codes[idx];
-    const id = (codeObj as any)._id;
-    if (!id) {
-      setCodes(codes.filter((_, i) => i !== idx));
-      return;
-    }
-
+    const newCodes = codes.filter((_, i) => i !== idx);
+    setCodes(newCodes);
     try {
-      await fetch(`/api/refcodes/${id}`, { method: "DELETE" });
-      setCodes(codes.filter((_, i) => i !== idx));
-    } catch(err) { console.error(err); }
+      localStorage.setItem("bg_ref_codes", JSON.stringify(newCodes));
+    } catch(e){}
+
+    const id = (codeObj as any)._id;
+    if (id) {
+      try {
+        await fetch(`/api/refcodes/${id}`, { method: "DELETE" });
+      } catch(err) { console.error(err); }
+    }
   };
 
   const copyCode = (code: string) => {
@@ -2024,12 +2026,19 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
   const confirmDeleteSub = async () => {
     if (deleteConfirmIdx === null) return;
     const sub = subadmins[deleteConfirmIdx];
-    const id = (sub as any)._id || sub.id;
+    const newSubs = subadmins.filter((_, i) => i !== deleteConfirmIdx);
+    setSubadmins(newSubs);
     try {
-      await fetch(`/api/subadmins/${id}`, { method: "DELETE" });
-      setSubadmins(subadmins.filter((_, i) => i !== deleteConfirmIdx));
-    } catch(err) { console.error(err); }
+      localStorage.setItem("bg_subadmins", JSON.stringify(newSubs));
+    } catch(e){}
+
     setDeleteConfirmIdx(null);
+    const id = (sub as any)._id || sub.id;
+    if (id) {
+      try {
+        await fetch(`/api/subadmins/${id}`, { method: "DELETE" });
+      } catch(err) { console.error(err); }
+    }
   };
 
   const deleteSub = (idx: number) => {
@@ -2865,7 +2874,7 @@ const PaymentsTab = ({
 }: {
   payments: Payment[];
   onAddPayment: (student: { name: string; email: string; phone: string; course: string }) => void;
-  onDeletePayment: (id: string) => void;
+  onDeletePayment: (email: string, transactionId: string, id?: string) => void;
   userRole: "admin" | "subadmin";
 }) => {
   const [search, setSearch] = useState("");
@@ -3100,7 +3109,7 @@ const PaymentsTab = ({
                     </button>
                   )}
                   <button
-                    onClick={() => onDeletePayment((p as any)._id || (p as any).id)}
+                    onClick={() => onDeletePayment(p.email, p.transactionId, (p as any)._id || (p as any).id)}
                     className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center"
                     title="Delete Payment"
                   >
@@ -3176,7 +3185,7 @@ const PaymentsTab = ({
                           </button>
                         )}
                         <button
-                          onClick={() => onDeletePayment((p as any)._id || (p as any).id)}
+                          onClick={() => onDeletePayment(p.email, p.transactionId, (p as any)._id || (p as any).id)}
                           className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center"
                           title="Delete Payment"
                         >
@@ -3291,8 +3300,8 @@ const AdminPanel = () => {
   const [subadminUsername, setSubadminUsername] = useState("");
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [deletePaymentConfirmId, setDeletePaymentConfirmId] = useState<string | null>(null);
+  const [deleteRegTarget, setDeleteRegTarget] = useState<{ id?: string; email: string; phone: string } | null>(null);
+  const [deletePayTarget, setDeletePayTarget] = useState<{ id?: string; transactionId: string; email: string } | null>(null);
   const navigate = useNavigate();
 
   // Stateful student registration lists backed by localStorage
@@ -3432,51 +3441,123 @@ const AdminPanel = () => {
   }, []);
 
   const handleDeleteRegistration = async (email: string, phone: string, id?: string) => {
-    if (id) setDeleteConfirmId(id);
+    setDeleteRegTarget({ email, phone, id });
   };
 
   const confirmDelete = async () => {
-    if (!deleteConfirmId) return;
-    const targetId = deleteConfirmId;
-    setRegistrations(prev => prev.filter(r => r._id !== targetId));
-    setDeleteConfirmId(null);
+    if (!deleteRegTarget) return;
+    const { id, email, phone } = deleteRegTarget;
+
+    setRegistrations(prev => prev.filter(r => {
+      if (id && ((r as any)._id === id || (r as any).id === id)) return false;
+      if (email && r.email && r.email.toLowerCase() === email.toLowerCase()) return false;
+      if (phone && r.phone && r.phone === phone) return false;
+      return true;
+    }));
+
     try {
-      await fetch(`/api/registrations/${targetId}`, { method: "DELETE" });
-      fetchRegistrationsAndPayments();
+      const storedStr = localStorage.getItem("bg_registrations");
+      if (storedStr) {
+        const stored: Registration[] = JSON.parse(storedStr);
+        const updated = stored.filter(r => {
+          if (id && ((r as any)._id === id || (r as any).id === id)) return false;
+          if (email && r.email && r.email.toLowerCase() === email.toLowerCase()) return false;
+          if (phone && r.phone && r.phone === phone) return false;
+          return true;
+        });
+        localStorage.setItem("bg_registrations", JSON.stringify(updated));
+      }
     } catch (e) {
-      console.error("Failed to delete registration", e);
+      console.error("Error updating localStorage on registration delete", e);
+    }
+
+    setDeleteRegTarget(null);
+
+    if (id) {
+      try {
+        await fetch(`/api/registrations/${id}`, { method: "DELETE" });
+      } catch (e) {
+        console.error("Failed to delete registration from database", e);
+      }
     }
   };
 
-  const handleDeletePayment = async (id: string) => {
-    if (id) setDeletePaymentConfirmId(id);
+  const handleDeletePayment = async (email: string, transactionId: string, id?: string) => {
+    setDeletePayTarget({ id, transactionId, email });
   };
 
   const confirmDeletePayment = async () => {
-    if (!deletePaymentConfirmId) return;
-    const targetId = deletePaymentConfirmId;
-    setPayments(prev => prev.filter(p => p._id !== targetId));
-    setDeletePaymentConfirmId(null);
+    if (!deletePayTarget) return;
+    const { id, transactionId, email } = deletePayTarget;
+
+    setPayments(prev => prev.filter(p => {
+      if (id && ((p as any)._id === id || (p as any).id === id)) return false;
+      if (transactionId && p.transactionId && p.transactionId === transactionId) return false;
+      if (email && p.email && p.email.toLowerCase() === email.toLowerCase()) return false;
+      return true;
+    }));
+
     try {
-      await fetch(`/api/payments/${targetId}`, { method: "DELETE" });
-      fetchRegistrationsAndPayments();
+      const storedStr = localStorage.getItem("bg_payments");
+      if (storedStr) {
+        const stored: Payment[] = JSON.parse(storedStr);
+        const updated = stored.filter(p => {
+          if (id && ((p as any)._id === id || (p as any).id === id)) return false;
+          if (transactionId && p.transactionId && p.transactionId === transactionId) return false;
+          if (email && p.email && p.email.toLowerCase() === email.toLowerCase()) return false;
+          return true;
+        });
+        localStorage.setItem("bg_payments", JSON.stringify(updated));
+      }
     } catch (e) {
-      console.error("Failed to delete payment", e);
+      console.error("Error updating localStorage on payment delete", e);
+    }
+
+    setDeletePayTarget(null);
+
+    if (id) {
+      try {
+        await fetch(`/api/payments/${id}`, { method: "DELETE" });
+      } catch (e) {
+        console.error("Failed to delete payment from database", e);
+      }
     }
   };
 
   const handleEditRegistration = async (oldEmail: string, oldPhone: string, updatedReg: Registration, id?: string) => {
-    if (!id) return;
-    setRegistrations(prev => prev.map(r => r._id === id ? { ...r, ...updatedReg } : r));
+    setRegistrations(prev => prev.map(r => {
+      const isMatch = (id && ((r as any)._id === id || (r as any).id === id)) || 
+                      (oldEmail && r.email && r.email.toLowerCase() === oldEmail.toLowerCase()) || 
+                      (oldPhone && r.phone && r.phone === oldPhone);
+      return isMatch ? { ...r, ...updatedReg } : r;
+    }));
+
     try {
-      await fetch(`/api/registrations/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedReg)
-      });
-      fetchRegistrationsAndPayments();
+      const storedStr = localStorage.getItem("bg_registrations");
+      if (storedStr) {
+        const stored: Registration[] = JSON.parse(storedStr);
+        const updated = stored.map(r => {
+          const isMatch = (id && ((r as any)._id === id || (r as any).id === id)) || 
+                          (oldEmail && r.email && r.email.toLowerCase() === oldEmail.toLowerCase()) || 
+                          (oldPhone && r.phone && r.phone === oldPhone);
+          return isMatch ? { ...r, ...updatedReg } : r;
+        });
+        localStorage.setItem("bg_registrations", JSON.stringify(updated));
+      }
     } catch (e) {
-      console.error("Failed to edit registration", e);
+      console.error("Error updating localStorage on registration edit", e);
+    }
+
+    if (id) {
+      try {
+        await fetch(`/api/registrations/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedReg)
+        });
+      } catch (e) {
+        console.error("Failed to edit registration in database", e);
+      }
     }
   };
 
@@ -4004,7 +4085,7 @@ const AdminPanel = () => {
       )}
 
       {/* Custom Delete Confirmation Modal */}
-      {deleteConfirmId && (
+      {deleteRegTarget && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#0e1726] border border-slate-200 dark:border-white/10 rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
             <div className="w-16 h-16 bg-red-100 dark:bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -4014,7 +4095,7 @@ const AdminPanel = () => {
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Are you sure you want to delete this student's registration? This action cannot be undone.</p>
             <div className="flex gap-3">
               <button 
-                onClick={() => setDeleteConfirmId(null)} 
+                onClick={() => setDeleteRegTarget(null)} 
                 className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 rounded-xl font-bold transition text-sm cursor-pointer border-none"
               >
                 Cancel
@@ -4031,7 +4112,7 @@ const AdminPanel = () => {
       )}
 
       {/* Custom Delete Payment Confirmation Modal */}
-      {deletePaymentConfirmId && (
+      {deletePayTarget && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#0e1726] border border-slate-200 dark:border-white/10 rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
             <div className="w-16 h-16 bg-red-100 dark:bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -4041,7 +4122,7 @@ const AdminPanel = () => {
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Are you sure you want to delete this payment record? This action cannot be undone.</p>
             <div className="flex gap-3">
               <button 
-                onClick={() => setDeletePaymentConfirmId(null)} 
+                onClick={() => setDeletePayTarget(null)} 
                 className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 rounded-xl font-bold transition text-sm cursor-pointer border-none"
               >
                 Cancel
