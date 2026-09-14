@@ -210,18 +210,9 @@ const getRemainingBalance = (email: string, phone: string, payments: Payment[]):
   return "₹0";
 };
 
-// ─── MOCK DATA (since Google Scripts need server-side fetch workaround) ──
-// In production, replace with actual GET endpoints from your Apps Script
-const MOCK_REGISTRATIONS: Registration[] = [
-  { name: "Ravi Patel", email: "ravi@example.com", phone: "9876543210", course: "MERN Stack", college: "BUIT", city: "Bhopal", timestamp: "2024-07-10 10:22" },
-  { name: "Sunita Verma", email: "sunita@example.com", phone: "9812341234", course: "Frontend Developer", college: "PDPS College", city: "Indore", timestamp: "2024-07-10 11:05" },
-  { name: "Mohit Sharma", email: "mohit@example.com", phone: "9911223344", course: "MERN Stack", college: "Other", city: "Jabalpur", timestamp: "2024-07-10 14:40" },
-];
-
-const MOCK_PAYMENTS: Payment[] = [
-  { name: "Ravi Patel", email: "ravi@example.com", phone: "9876543210", transactionId: "UPI123456789012", course: "MERN Stack", planTitle: "One-Time", planAmount: "₹6,000", timestamp: "2024-07-10 10:35" },
-  { name: "Sunita Verma", email: "sunita@example.com", phone: "9812341234", transactionId: "UPI987654321000", course: "Frontend Developer", planTitle: "1st Installment", planAmount: "₹3,200", timestamp: "2024-07-10 11:22" },
-];
+// ─── REAL DATA INITIALIZATION (Only actual database entries shown) ──
+const MOCK_REGISTRATIONS: Registration[] = [];
+const MOCK_PAYMENTS: Payment[] = [];
 
 // ═══════════════════════════════════════════════════════════════════════
 // LOGIN PAGE
@@ -3415,13 +3406,15 @@ const AdminPanel = () => {
 
   const confirmDelete = async () => {
     if (!deleteConfirmId) return;
+    const targetId = deleteConfirmId;
+    setRegistrations(prev => prev.filter(r => r._id !== targetId));
+    setDeleteConfirmId(null);
     try {
-      await fetch(`/api/registrations/${deleteConfirmId}`, { method: "DELETE" });
+      await fetch(`/api/registrations/${targetId}`, { method: "DELETE" });
       fetchRegistrationsAndPayments();
     } catch (e) {
       console.error("Failed to delete registration", e);
     }
-    setDeleteConfirmId(null);
   };
 
   const handleDeletePayment = async (id: string) => {
@@ -3430,17 +3423,20 @@ const AdminPanel = () => {
 
   const confirmDeletePayment = async () => {
     if (!deletePaymentConfirmId) return;
+    const targetId = deletePaymentConfirmId;
+    setPayments(prev => prev.filter(p => p._id !== targetId));
+    setDeletePaymentConfirmId(null);
     try {
-      await fetch(`/api/payments/${deletePaymentConfirmId}`, { method: "DELETE" });
+      await fetch(`/api/payments/${targetId}`, { method: "DELETE" });
       fetchRegistrationsAndPayments();
     } catch (e) {
       console.error("Failed to delete payment", e);
     }
-    setDeletePaymentConfirmId(null);
   };
 
   const handleEditRegistration = async (oldEmail: string, oldPhone: string, updatedReg: Registration, id?: string) => {
-    if(!id) return;
+    if (!id) return;
+    setRegistrations(prev => prev.map(r => r._id === id ? { ...r, ...updatedReg } : r));
     try {
       await fetch(`/api/registrations/${id}`, {
         method: "PUT",
@@ -3450,7 +3446,6 @@ const AdminPanel = () => {
       fetchRegistrationsAndPayments();
     } catch (e) {
       console.error("Failed to edit registration", e);
-      alert("Error saving changes.");
     }
   };
 
