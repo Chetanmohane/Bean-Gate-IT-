@@ -258,6 +258,7 @@ const Offer = ({
   const [errors, setErrors] = useState<Record<string, boolean>>({});
 
   const [phoneErrorMsg, setPhoneErrorMsg] = useState("");
+  const [emailErrorMsg, setEmailErrorMsg] = useState("");
 
   const checkIsPhoneRegistered = (inputPhone: string): boolean => {
     const cleanInput = inputPhone.replace(/[^0-9]/g, "");
@@ -287,6 +288,33 @@ const Offer = ({
     return false;
   };
 
+  const checkIsEmailRegistered = (inputEmail: string): boolean => {
+    const cleanEmail = inputEmail.trim().toLowerCase();
+    if (!cleanEmail) return false;
+
+    const existsInRaw = rawRegistrations.some((r: any) => {
+      const e = String(r.email || "").trim().toLowerCase();
+      return e === cleanEmail;
+    });
+    if (existsInRaw) return true;
+
+    try {
+      const stored = localStorage.getItem("bg_registrations");
+      if (stored) {
+        const list = JSON.parse(stored);
+        if (Array.isArray(list)) {
+          const existsInLocal = list.some((r: any) => {
+            const e = String(r.email || "").trim().toLowerCase();
+            return e === cleanEmail;
+          });
+          if (existsInLocal) return true;
+        }
+      }
+    } catch (e) {}
+
+    return false;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
@@ -300,6 +328,19 @@ const Offer = ({
         setErrors(prev => ({ ...prev, phone: true }));
       } else {
         setPhoneErrorMsg("");
+        if (errors[name]) setErrors({ ...errors, [name]: false });
+      }
+      return;
+    }
+
+    if (name === "email") {
+      const cleanEmail = value.trim().toLowerCase();
+      setFormData({ ...formData, [name]: value });
+      if (cleanEmail && checkIsEmailRegistered(cleanEmail)) {
+        setEmailErrorMsg("Yeh email ID pehle se registered hai! Ek email ID se dobara registration nahi kar sakte.");
+        setErrors(prev => ({ ...prev, email: true }));
+      } else {
+        setEmailErrorMsg("");
         if (errors[name]) setErrors({ ...errors, [name]: false });
       }
       return;
@@ -331,7 +372,13 @@ const Offer = ({
       setPhoneErrorMsg("Yeh mobile number pehle se registered hai! Ek mobile number se dobara registration nahi kar sakte.");
     }
 
-    if (!formData.email.trim()) newErrors.email = true;
+    if (!formData.email.trim()) {
+      newErrors.email = true;
+      setEmailErrorMsg("Email address is required *");
+    } else if (checkIsEmailRegistered(formData.email)) {
+      newErrors.email = true;
+      setEmailErrorMsg("Yeh email ID pehle se registered hai! Ek email ID se dobara registration nahi kar sakte.");
+    }
     if (!formData.course) newErrors.course = true;
     if (!formData.college) newErrors.college = true;
     if (!formData.city) newErrors.city = true;
@@ -572,6 +619,11 @@ const Offer = ({
                     placeholder="john@example.com"
                     className={`w-full px-4 py-2 bg-gray-50 border rounded-lg focus:outline-none text-sm text-gray-900 transition-colors ${errors.email ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-gray-200 focus:ring-1 focus:ring-orange-500'}`}
                   />
+                  {errors.email && (
+                    <p className="text-[11px] text-red-500 font-bold mt-1 flex items-center gap-1">
+                      <span>⚠️ {emailErrorMsg || "Valid Email Address is required *"}</span>
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className={`block text-xs font-semibold mb-1 ${errors.course ? 'text-red-500' : 'text-gray-700'}`}>Select Course *</label>

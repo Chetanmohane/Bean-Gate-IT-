@@ -272,15 +272,26 @@ app.get('/api/registrations', async (req, res) => {
 
 app.post('/api/registrations', async (req, res) => {
   try {
-    const { phone } = req.body;
+    const { phone, email } = req.body;
     if (phone) {
       const cleanPhone = String(phone).replace(/[^0-9]/g, "").slice(-10);
       if (cleanPhone.length === 10) {
-        const existing = await Registration.findOne({
+        const existingPhone = await Registration.findOne({
           phone: { $regex: cleanPhone + "$" }
         });
-        if (existing) {
+        if (existingPhone) {
           return res.status(400).json({ message: "This mobile number is already registered!" });
+        }
+      }
+    }
+    if (email) {
+      const cleanEmail = String(email).trim().toLowerCase();
+      if (cleanEmail) {
+        const existingEmail = await Registration.findOne({
+          email: { $regex: "^" + cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "$", $options: "i" }
+        });
+        if (existingEmail) {
+          return res.status(400).json({ message: "This email address is already registered!" });
         }
       }
     }
