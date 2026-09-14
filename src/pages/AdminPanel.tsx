@@ -3322,6 +3322,32 @@ const AdminPanel = () => {
       console.warn("Failed to sync referral codes from server:", e);
     }
 
+    let deletedRegs: any[] = [];
+    try {
+      deletedRegs = JSON.parse(localStorage.getItem("bg_deleted_regs") || "[]");
+    } catch(e){}
+
+    let deletedPays: any[] = [];
+    try {
+      deletedPays = JSON.parse(localStorage.getItem("bg_deleted_pays") || "[]");
+    } catch(e){}
+
+    const isRegDeleted = (r: any) => {
+      return deletedRegs.some(d => 
+        (d.id && ((r._id && r._id === d.id) || (r.id && r.id === d.id))) ||
+        (d.email && r.email && r.email.toLowerCase() === d.email.toLowerCase()) ||
+        (d.phone && r.phone && r.phone === d.phone)
+      );
+    };
+
+    const isPayDeleted = (p: any) => {
+      return deletedPays.some(d => 
+        (d.id && ((p._id && p._id === d.id) || (p.id && p.id === d.id))) ||
+        (d.transactionId && p.transactionId && p.transactionId === d.transactionId) ||
+        (d.email && p.email && p.email.toLowerCase() === d.email.toLowerCase())
+      );
+    };
+
     let finalRegs: Registration[] = [];
     try {
       const regRes = await fetch("/api/registrations");
@@ -3334,20 +3360,23 @@ const AdminPanel = () => {
     } catch (e) {}
 
     let storedRegStr = localStorage.getItem("bg_registrations");
-    if (!storedRegStr && finalRegs.length === 0) {
+    if (!storedRegStr && finalRegs.length === 0 && deletedRegs.length === 0) {
       localStorage.setItem("bg_registrations", JSON.stringify(INITIAL_DEFAULT_REGISTRATIONS));
       storedRegStr = JSON.stringify(INITIAL_DEFAULT_REGISTRATIONS);
     }
-    const localRegs: Registration[] = storedRegStr ? JSON.parse(storedRegStr) : INITIAL_DEFAULT_REGISTRATIONS;
+    const localRegs: Registration[] = storedRegStr ? JSON.parse(storedRegStr) : (deletedRegs.length > 0 ? [] : INITIAL_DEFAULT_REGISTRATIONS);
 
-    const combinedRegs = [...finalRegs];
-    for (const lr of localRegs) {
+    const filteredServerRegs = finalRegs.filter(r => !isRegDeleted(r));
+    const filteredLocalRegs = localRegs.filter(r => !isRegDeleted(r));
+
+    const combinedRegs = [...filteredServerRegs];
+    for (const lr of filteredLocalRegs) {
       const exists = combinedRegs.some(r => (r._id && lr._id && r._id === lr._id) || (r.email && lr.email && r.email.toLowerCase() === lr.email.toLowerCase() && r.phone === lr.phone));
       if (!exists) {
         combinedRegs.push(lr);
       }
     }
-    setRegistrations(combinedRegs.length > 0 ? combinedRegs : INITIAL_DEFAULT_REGISTRATIONS);
+    setRegistrations(combinedRegs);
 
     let finalPays: Payment[] = [];
     try {
@@ -3361,20 +3390,23 @@ const AdminPanel = () => {
     } catch (e) {}
 
     let storedPayStr = localStorage.getItem("bg_payments");
-    if (!storedPayStr && finalPays.length === 0) {
+    if (!storedPayStr && finalPays.length === 0 && deletedPays.length === 0) {
       localStorage.setItem("bg_payments", JSON.stringify(INITIAL_DEFAULT_PAYMENTS));
       storedPayStr = JSON.stringify(INITIAL_DEFAULT_PAYMENTS);
     }
-    const localPays: Payment[] = storedPayStr ? JSON.parse(storedPayStr) : INITIAL_DEFAULT_PAYMENTS;
+    const localPays: Payment[] = storedPayStr ? JSON.parse(storedPayStr) : (deletedPays.length > 0 ? [] : INITIAL_DEFAULT_PAYMENTS);
 
-    const combinedPays = [...finalPays];
-    for (const lp of localPays) {
+    const filteredServerPays = finalPays.filter(p => !isPayDeleted(p));
+    const filteredLocalPays = localPays.filter(p => !isPayDeleted(p));
+
+    const combinedPays = [...filteredServerPays];
+    for (const lp of filteredLocalPays) {
       const exists = combinedPays.some(p => (p._id && lp._id && p._id === lp._id) || (p.transactionId && lp.transactionId && p.transactionId === lp.transactionId));
       if (!exists) {
         combinedPays.push(lp);
       }
     }
-    setPayments(combinedPays.length > 0 ? combinedPays : INITIAL_DEFAULT_PAYMENTS);
+    setPayments(combinedPays);
   };
 
   const autoMigrateData = async () => {
@@ -3456,6 +3488,13 @@ const AdminPanel = () => {
     }));
 
     try {
+      const deletedStr = localStorage.getItem("bg_deleted_regs") || "[]";
+      const deletedList: any[] = JSON.parse(deletedStr);
+      deletedList.push({ id, email: email ? email.toLowerCase() : "", phone });
+      localStorage.setItem("bg_deleted_regs", JSON.stringify(deletedList));
+    } catch(e){}
+
+    try {
       const storedStr = localStorage.getItem("bg_registrations");
       if (storedStr) {
         const stored: Registration[] = JSON.parse(storedStr);
@@ -3496,6 +3535,13 @@ const AdminPanel = () => {
       if (email && p.email && p.email.toLowerCase() === email.toLowerCase()) return false;
       return true;
     }));
+
+    try {
+      const deletedStr = localStorage.getItem("bg_deleted_pays") || "[]";
+      const deletedList: any[] = JSON.parse(deletedStr);
+      deletedList.push({ id, transactionId, email: email ? email.toLowerCase() : "" });
+      localStorage.setItem("bg_deleted_pays", JSON.stringify(deletedList));
+    } catch(e){}
 
     try {
       const storedStr = localStorage.getItem("bg_payments");
