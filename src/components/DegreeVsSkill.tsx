@@ -1,7 +1,11 @@
 import React from "react";
 import { FaQuestionCircle } from "react-icons/fa";
+import { usePlanConfig } from "../utils/planConfig";
 
 const DegreeVsSkill = () => {
+  const cfg = usePlanConfig();
+  const priceFormatted = (cfg.oneTimePrice ?? 6000).toLocaleString("en-IN");
+
   const questions = [
     "Can you build a Dynamic Website if given the task?",
     "Can you create a Complete Admin Panel if given the task?",
@@ -52,7 +56,7 @@ const DegreeVsSkill = () => {
 
               <div className="my-6">
                 <span className="text-5xl sm:text-6xl font-black text-orange-500 tracking-tight block">
-                  ₹6,499
+                  ₹{priceFormatted}
                 </span>
                 <span className="text-sm font-bold text-gray-600 uppercase tracking-wider block mt-1">
                   One-Time Fee

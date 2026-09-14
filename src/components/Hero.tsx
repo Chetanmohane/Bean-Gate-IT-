@@ -2,8 +2,12 @@ import React from "react";
 import { FaCheckCircle, FaReact, FaNodeJs } from "react-icons/fa";
 import { SiExpress, SiMongodb } from "react-icons/si";
 import heroDevImg from "../assets/hero-dev.jpg";
+import { usePlanConfig } from "../utils/planConfig";
 
 const Hero = () => {
+  const cfg = usePlanConfig();
+  const priceFormatted = (cfg.heroOfferPrice || cfg.oneTimePrice || 6000).toLocaleString("en-IN");
+
   const scrollToRegister = () => {
     const el = document.getElementById("register") || document.getElementById("pricing") || document.getElementById("reviews");
     if (el) {
@@ -71,7 +75,7 @@ const Hero = () => {
                     SPECIAL OFFER
                   </span>
                   <div className="text-4xl sm:text-5xl font-black text-[#FF5C28] tracking-tight leading-none">
-                    ₹6,499
+                    ₹{priceFormatted}
                   </div>
                   <p className="text-xs text-gray-400 font-medium mt-1">One-Time Course Fee</p>
                 </div>
@@ -100,7 +104,7 @@ const Hero = () => {
                 onClick={scrollToRegister}
                 className="w-auto px-6 py-2.5 sm:px-10 sm:py-3.5 bg-gradient-to-r from-[#FF5C28] to-[#FF7843] hover:from-[#e54b1a] hover:to-[#ff642b] text-white font-black text-xs sm:text-base uppercase tracking-wider rounded-lg sm:rounded-xl shadow-lg shadow-orange-500/25 transition transform hover:-translate-y-0.5 cursor-pointer border-none"
               >
-                JOIN NOW – ₹6,499
+                JOIN NOW – ₹{priceFormatted}
               </button>
               <p className="text-xs text-gray-400 font-medium">
                 Limited Seats - Enroll Now & Start Your Journey

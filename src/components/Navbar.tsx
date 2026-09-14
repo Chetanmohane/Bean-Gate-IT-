@@ -2,10 +2,13 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiMenuAlt3, HiX } from "react-icons/hi";
 import logo from "../assets/logo-beangate.png";
+import { usePlanConfig } from "../utils/planConfig";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const cfg = usePlanConfig();
+  const priceFormatted = (cfg.oneTimePrice ?? 6000).toLocaleString("en-IN");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -78,7 +81,7 @@ const Navbar = () => {
               onClick={scrollToRegistration}
               className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-black uppercase tracking-wider px-6 py-2.5 rounded-md shadow-md shadow-orange-500/20 hover:shadow-orange-500/30 transition transform hover:-translate-y-0.5 border-none cursor-pointer"
             >
-              JOIN NOW – ₹6,499
+              JOIN NOW – ₹{priceFormatted}
             </button>
           </div>
 
@@ -88,7 +91,7 @@ const Navbar = () => {
               onClick={scrollToRegistration}
               className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-black uppercase px-4 py-2 rounded-md"
             >
-              JOIN – ₹6,499
+              JOIN – ₹{priceFormatted}
             </button>
             <button
               className="text-white text-2xl p-1 focus:outline-none"

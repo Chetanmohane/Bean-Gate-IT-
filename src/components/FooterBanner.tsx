@@ -1,10 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { FaPhoneAlt, FaEnvelope, FaGlobe } from "react-icons/fa";
-
-interface ContactInfo {
-  contactPhone?: string;
-  contactEmail?: string;
-}
+import { usePlanConfig } from "../utils/planConfig";
 
 const DEFAULT_BANNER_PHONE = "+91 74711 12020";
 
@@ -83,7 +79,7 @@ const FooterBanner = () => {
               onClick={scrollToRegister}
               className="px-8 py-3 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-orange-500/20 transition cursor-pointer border-none"
             >
-              JOIN NOW – ₹6,499
+              JOIN NOW – ₹{priceFormatted}
             </button>
             <span className="text-[10px] text-gray-400 font-medium mt-1">
               Limited Seats – Enroll Now!

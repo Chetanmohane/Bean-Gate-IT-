@@ -1,16 +1,10 @@
 import React, { useState } from "react";
-import { 
-  FaShieldAlt, 
-  FaBolt, 
-  FaHeadset, 
-  FaUsers, 
-  FaInfinity, 
-  FaLaptopCode, 
-  FaAward, 
-  FaLifeRing 
-} from "react-icons/fa";
+import { FaInfinity, FaLaptopCode, FaAward, FaLifeRing, FaUser, FaEnvelope, FaPhone, FaGraduationCap, FaMapMarkerAlt, FaTag, FaCheckCircle } from "react-icons/fa";
+import { usePlanConfig } from "../utils/planConfig";
 
 const RegisterNow = () => {
+  const cfg = usePlanConfig();
+  const priceFormatted = (cfg.oneTimePrice ?? 6000).toLocaleString("en-IN");
   const [formData, setFormData] = useState({
     fullName: "",
     mobileNumber: "",
@@ -62,7 +56,7 @@ const RegisterNow = () => {
 
               <div className="my-6">
                 <span className="text-4xl sm:text-5xl font-black text-orange-500 tracking-tight block">
-                  ₹6,499
+                  ₹{priceFormatted}
                 </span>
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block mt-1">
                   One-Time Course Fee

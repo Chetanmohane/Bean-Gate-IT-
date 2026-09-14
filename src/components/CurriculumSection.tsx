@@ -11,8 +11,11 @@ import {
   FaCheckCircle 
 } from "react-icons/fa";
 import { SiExpress, SiMongodb } from "react-icons/si";
+import { usePlanConfig } from "../utils/planConfig";
 
 const CurriculumSection = () => {
+  const cfg = usePlanConfig();
+  const priceFormatted = (cfg.oneTimePrice ?? 6000).toLocaleString("en-IN");
   const [showModal, setShowModal] = useState(false);
 
   const curriculumSteps = [
@@ -270,7 +273,7 @@ const CurriculumSection = () => {
                 onClick={scrollToRegister}
                 className="w-full sm:w-auto px-7 py-3 bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition cursor-pointer border-none shadow-md"
               >
-                ENROLL NOW – ₹6,499
+                ENROLL NOW – ₹{priceFormatted}
               </button>
             </div>
 
