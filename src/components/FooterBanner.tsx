@@ -36,17 +36,16 @@ const FooterBanner = () => {
   useEffect(() => {
     fetchConfig();
 
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === "bg_plan_config") {
-        fetchConfig();
-      }
-    };
+    const handleStorage = () => fetchConfig();
 
     window.addEventListener("storage", handleStorage);
     window.addEventListener("bg_config_updated", fetchConfig);
     window.addEventListener("focus", fetchConfig);
 
+    const interval = setInterval(fetchConfig, 3000);
+
     return () => {
+      clearInterval(interval);
       window.removeEventListener("storage", handleStorage);
       window.removeEventListener("bg_config_updated", fetchConfig);
       window.removeEventListener("focus", fetchConfig);

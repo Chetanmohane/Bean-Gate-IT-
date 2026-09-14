@@ -39,20 +39,35 @@ const Pricing = ({
   });
 
   useEffect(() => {
+    const loadLocalConfig = () => {
+      try {
+        const stored = localStorage.getItem("bg_plan_config");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setPricingCfg(prev => ({ ...prev, ...parsed }));
+        }
+      } catch (e) {}
+    };
+
     const fetchConfig = () => {
+      loadLocalConfig();
       fetch("/api/planconfig")
         .then(res => {
           if (!res.ok) throw new Error();
           return res.json();
         })
         .then(data => {
-          if (data) {
-            setPricingCfg(data);
-            localStorage.setItem("bg_plan_config", JSON.stringify(data));
+          if (data && typeof data === "object") {
+            setPricingCfg(prev => ({ ...prev, ...data }));
+            try {
+              const current = localStorage.getItem("bg_plan_config");
+              const existing = current ? JSON.parse(current) : {};
+              localStorage.setItem("bg_plan_config", JSON.stringify({ ...existing, ...data }));
+            } catch (e) {}
           }
         })
-        .catch(e => {
-          console.warn("Failed to fetch planconfig in Pricing, using local storage cache:", e);
+        .catch(() => {
+          loadLocalConfig();
         });
     };
 
@@ -62,7 +77,7 @@ const Pricing = ({
     window.addEventListener("bg_config_updated", handleStorage);
     window.addEventListener("focus", handleStorage);
 
-    const interval = setInterval(fetchConfig, 5000);
+    const interval = setInterval(fetchConfig, 3000);
     return () => {
       clearInterval(interval);
       window.removeEventListener("storage", handleStorage);

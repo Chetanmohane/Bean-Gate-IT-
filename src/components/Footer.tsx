@@ -53,17 +53,16 @@ const Footer = () => {
   useEffect(() => {
     fetchContact();
 
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === "bg_plan_config") {
-        fetchContact();
-      }
-    };
+    const handleStorage = () => fetchContact();
 
     window.addEventListener("storage", handleStorage);
     window.addEventListener("bg_config_updated", fetchContact);
     window.addEventListener("focus", fetchContact);
 
+    const interval = setInterval(fetchContact, 3000);
+
     return () => {
+      clearInterval(interval);
       window.removeEventListener("storage", handleStorage);
       window.removeEventListener("bg_config_updated", fetchContact);
       window.removeEventListener("focus", fetchContact);

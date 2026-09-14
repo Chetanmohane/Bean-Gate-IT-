@@ -67,7 +67,21 @@ const Offer = ({
   });
 
   useEffect(() => {
+    const loadLocalConfig = () => {
+      try {
+        const s = localStorage.getItem("bg_plan_config");
+        if (s) {
+          const parsed = JSON.parse(s);
+          setCfg(prev => ({ ...prev, ...parsed }));
+          if (Array.isArray(parsed.courses) && parsed.courses.length > 0) setCourses(parsed.courses);
+          if (Array.isArray(parsed.colleges) && parsed.colleges.length > 0) setColleges(parsed.colleges);
+          if (Array.isArray(parsed.cities) && parsed.cities.length > 0) setCities(parsed.cities);
+        }
+      } catch (e) {}
+    };
+
     const fetchConfig = () => {
+      loadLocalConfig();
       fetch("/api/planconfig")
         .then((res) => {
           if (!res.ok) throw new Error("API failed");
@@ -75,23 +89,19 @@ const Offer = ({
         })
         .then((data) => {
           if (data && data.oneTimePrice) {
-            setCfg(data);
-            localStorage.setItem("bg_plan_config", JSON.stringify(data));
+            setCfg(prev => ({ ...prev, ...data }));
+            try {
+              const current = localStorage.getItem("bg_plan_config");
+              const existing = current ? JSON.parse(current) : {};
+              localStorage.setItem("bg_plan_config", JSON.stringify({ ...existing, ...data }));
+            } catch (e) {}
             if (Array.isArray(data.courses) && data.courses.length > 0) setCourses(data.courses);
             if (Array.isArray(data.colleges) && data.colleges.length > 0) setColleges(data.colleges);
             if (Array.isArray(data.cities) && data.cities.length > 0) setCities(data.cities);
           }
         })
-        .catch((err) => {
-          console.warn("Failed to load dynamic dropdown config, using local fallbacks:", err);
-          try {
-            const s = localStorage.getItem("bg_plan_config");
-            if (s) {
-              setCfg(JSON.parse(s));
-            }
-          } catch (e) {
-            console.error(e);
-          }
+        .catch(() => {
+          loadLocalConfig();
         });
     };
 
@@ -101,7 +111,7 @@ const Offer = ({
     window.addEventListener("bg_config_updated", handleStorage);
     window.addEventListener("focus", handleStorage);
 
-    const interval = setInterval(fetchConfig, 5000);
+    const interval = setInterval(fetchConfig, 3000);
     return () => {
       clearInterval(interval);
       window.removeEventListener("storage", handleStorage);
