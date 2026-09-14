@@ -99,23 +99,7 @@ const WhatsAppButton: React.FC = () => {
     <div
       className={`fixed ${positionClass} items-center gap-3 z-[9990] group transition-all duration-300 pointer-events-auto`}
     >
-      {/* WhatsApp Tooltip Pill */}
-      {showTooltip && (
-        <div className="relative flex items-center gap-2 bg-slate-900/90 backdrop-blur-md text-white text-xs sm:text-sm font-bold px-3.5 py-2 rounded-full shadow-xl border border-emerald-500/30 animate-fade-in transition-all group-hover:scale-105">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>{label}</span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowTooltip(false);
-            }}
-            className="ml-1 text-slate-400 hover:text-white transition-colors p-0.5 rounded-full hover:bg-white/10 cursor-pointer border-0 bg-transparent flex items-center justify-center"
-            title="Close hint"
-          >
-            <FaTimes className="text-[10px]" />
-          </button>
-        </div>
-      )}
+
 
       {/* Floating WhatsApp Action Button */}
       <a
