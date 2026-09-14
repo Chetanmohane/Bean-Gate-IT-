@@ -202,26 +202,9 @@ const initializeDBData = async () => {
       await RefCode.updateMany({ applicablePlan: { $exists: false } }, { $set: { applicablePlan: "all", discountPercent: 10 } });
     }
 
-    // Create default registrations if not exists
-    const regCount = await Registration.countDocuments();
-    if (regCount === 0) {
-      console.log('Creating initial default registrations...');
-      await Registration.create([
-        { name: "Rahul Sharma", email: "rahul.sharma@gmail.com", phone: "9876543210", course: "MERN Stack", college: "BUIT Bhopal", city: "Bhopal", timestamp: new Date("2026-09-10T10:22:00Z"), referralCode: "BEANGATE10" },
-        { name: "Priya Verma", email: "priya.verma@gmail.com", phone: "9812341234", course: "Frontend Developer", college: "PDPS College", city: "Indore", timestamp: new Date("2026-09-11T11:05:00Z"), referralCode: "MERN10" },
-        { name: "Aman Gupta", email: "aman.gupta@gmail.com", phone: "9911223344", course: "MERN Stack", college: "LNCT Bhopal", city: "Jabalpur", timestamp: new Date("2026-09-12T14:40:00Z"), referralCode: "" }
-      ]);
-    }
-
-    // Create default payments if not exists
-    const payCount = await Payment.countDocuments();
-    if (payCount === 0) {
-      console.log('Creating initial default payments...');
-      await Payment.create([
-        { name: "Rahul Sharma", email: "rahul.sharma@gmail.com", phone: "9876543210", transactionId: "UPI982314567890", course: "MERN Stack", planTitle: "One-Time", planAmount: "₹6,000", timestamp: new Date("2026-09-10T10:35:00Z"), referralCode: "BEANGATE10" },
-        { name: "Priya Verma", email: "priya.verma@gmail.com", phone: "9812341234", transactionId: "UPI871234567111", course: "Frontend Developer", planTitle: "1st Installment", planAmount: "₹3,200", timestamp: new Date("2026-09-11T11:22:00Z"), referralCode: "MERN10" }
-      ]);
-    }
+    // Clean up legacy dummy seed registrations and payments if present in MongoDB
+    await Registration.deleteMany({ email: { $in: ["rahul.sharma@gmail.com", "priya.verma@gmail.com", "aman.gupta@gmail.com"] } });
+    await Payment.deleteMany({ email: { $in: ["rahul.sharma@gmail.com", "priya.verma@gmail.com", "aman.gupta@gmail.com"] } });
     dbInitialized = true;
   } catch (err) {
     console.error('Error initializing database data:', err.message);
