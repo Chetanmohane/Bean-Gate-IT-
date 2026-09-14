@@ -281,7 +281,7 @@ const Offer = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation
@@ -305,13 +305,43 @@ const Offer = ({
       return;
     }
 
+    const timestamp = new Date().toISOString().replace("T", " ").substring(0, 16);
+    const finalRefCode = appliedDiscount ? referralCode.trim().toUpperCase() : "";
+    const regPayload = {
+      name: formData.name,
+      phone: formData.phone,
+      email: formData.email,
+      course: formData.course,
+      college: formData.college || "N/A",
+      city: formData.city || "N/A",
+      timestamp,
+      referralCode: finalRefCode
+    };
+
+    try {
+      fetch("/api/registrations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(regPayload)
+      }).catch(err => console.warn("API registration post failed:", err));
+
+      const storedRegs = localStorage.getItem("bg_registrations");
+      const list = storedRegs ? JSON.parse(storedRegs) : [];
+      const hasReg = list.some((r: any) => r.email === formData.email && r.phone === formData.phone);
+      if (!hasReg) {
+        localStorage.setItem("bg_registrations", JSON.stringify([regPayload, ...list]));
+      }
+      window.dispatchEvent(new Event("bg_registration_added"));
+      window.dispatchEvent(new Event("storage"));
+    } catch (e) {}
+
     // Redirect to checkout carrying registration details
     navigate("/payment", {
       state: {
         registrationData: formData,
         planId: formData.plan,
         discountApplied: appliedDiscount,
-        referralCode: appliedDiscount ? referralCode.trim().toUpperCase() : ""
+        referralCode: finalRefCode
       }
     });
   };

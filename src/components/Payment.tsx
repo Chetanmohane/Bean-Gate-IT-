@@ -217,88 +217,70 @@ function Payment() {
     setIsSubmitting(true);
 
     try {
+      const timestamp = new Date().toISOString().replace("T", " ").substring(0, 16);
       const finalRefCode = discountAppliedState ? promoCode.trim().toUpperCase() : "";
 
-      let backendSuccess = false;
-      try {
-        // 1. Submit Registration Data to Backend API
-        const regRes = await fetch("/api/registrations", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: formData.name,
-            phone: formData.phone,
-            email: formData.email,
-            course: formData.course,
-            college: formData.college || "N/A",
-            city: formData.city || "N/A",
-            referralCode: finalRefCode
-          }),
-        });
-        if (!regRes.ok) throw new Error("Failed to save registration");
+      const regDataObj = {
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        course: formData.course,
+        college: formData.college || "N/A",
+        city: formData.city || "N/A",
+        timestamp,
+        referralCode: finalRefCode
+      };
 
-        // 2. Submit Payment Confirmation to Backend API
-        const payRes = await fetch("/api/payments", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            transactionId: formData.transactionId,
-            course: formData.course,
-            planTitle: selectedPlan.title,
-            planAmount: totalAmountStr,
-            referralCode: finalRefCode
-          }),
-        });
-        if (!payRes.ok) throw new Error("Failed to save payment");
-        
-        backendSuccess = true;
-      } catch (backendError) {
-        console.warn("Backend API failed, falling back to local storage...", backendError);
+      const payDataObj = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        transactionId: formData.transactionId,
+        course: formData.course,
+        planTitle: selectedPlan.title,
+        planAmount: totalAmountStr,
+        timestamp,
+        referralCode: finalRefCode
+      };
+
+      // 1. Save locally in localStorage for Admin Panel immediately for zero delay
+      try {
+        const storedRegs = localStorage.getItem("bg_registrations");
+        const registrationsList = storedRegs ? JSON.parse(storedRegs) : [];
+        const hasReg = registrationsList.some((r: any) => r.email === formData.email && r.phone === formData.phone);
+        if (!hasReg) {
+          localStorage.setItem("bg_registrations", JSON.stringify([regDataObj, ...registrationsList]));
+        }
+
+        const storedPays = localStorage.getItem("bg_payments");
+        const paymentsList = storedPays ? JSON.parse(storedPays) : [];
+        const hasPay = paymentsList.some((p: any) => p.transactionId === formData.transactionId);
+        if (!hasPay) {
+          localStorage.setItem("bg_payments", JSON.stringify([payDataObj, ...paymentsList]));
+        }
+
+        window.dispatchEvent(new Event("bg_registration_added"));
+        window.dispatchEvent(new Event("bg_payment_added"));
+        window.dispatchEvent(new Event("storage"));
+      } catch (e) {
+        console.error("Error saving data locally:", e);
       }
 
-      // 3. Fallback: Save locally in localStorage for Admin Panel immediately if Backend failed
-      if (!backendSuccess) {
-        try {
-          const timestamp = new Date().toISOString().replace("T", " ").substring(0, 16);
-          
-          const storedRegs = localStorage.getItem("bg_registrations");
-          const registrationsList = storedRegs ? JSON.parse(storedRegs) : [];
-          const newReg = {
-            name: formData.name,
-            phone: formData.phone,
-            email: formData.email,
-            course: formData.course,
-            college: formData.college || "N/A",
-            city: formData.city || "N/A",
-            timestamp,
-            referralCode: finalRefCode
-          };
-          localStorage.setItem("bg_registrations", JSON.stringify([newReg, ...registrationsList]));
+      // 2. Submit Registration & Payment Data to Backend API
+      try {
+        await fetch("/api/registrations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(regDataObj),
+        });
 
-          const storedPays = localStorage.getItem("bg_payments");
-          const paymentsList = storedPays ? JSON.parse(storedPays) : [];
-          const newPay = {
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            transactionId: formData.transactionId,
-            course: formData.course,
-            planTitle: selectedPlan.title,
-            planAmount: totalAmountStr,
-            timestamp,
-            referralCode: finalRefCode
-          };
-          localStorage.setItem("bg_payments", JSON.stringify([newPay, ...paymentsList]));
-        } catch (e) {
-          console.error("Error saving fallback data locally:", e);
-        }
+        await fetch("/api/payments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payDataObj),
+        });
+      } catch (backendError) {
+        console.warn("Backend API call failed, saved locally fallback:", backendError);
       }
 
       // 4. Update referral code uses count if active (Local fallback)

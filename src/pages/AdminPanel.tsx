@@ -3306,42 +3306,58 @@ const AdminPanel = () => {
     }
 
     try {
-      const regRes = await fetch("/api/registrations");
-      if (!regRes.ok) throw new Error("Registrations API returned " + regRes.status);
-      const regData = await regRes.json();
-      if (Array.isArray(regData)) {
-        setRegistrations(regData);
-      } else {
-        throw new Error("Registrations API returned invalid format");
+      const codeRes = await fetch("/api/refcodes");
+      if (codeRes.ok) {
+        const codeData = await codeRes.json();
+        if (Array.isArray(codeData)) {
+          localStorage.setItem("bg_ref_codes", JSON.stringify(codeData));
+        }
       }
     } catch (e) {
-      console.warn("Falling back to local storage for registrations...", e);
-      const stored = localStorage.getItem("bg_registrations");
-      if (stored) {
-        setRegistrations(JSON.parse(stored));
-      } else {
-        setRegistrations(MOCK_REGISTRATIONS);
-      }
+      console.warn("Failed to sync referral codes from server:", e);
     }
 
+    let finalRegs: Registration[] = [];
     try {
-      const payRes = await fetch("/api/payments");
-      if (!payRes.ok) throw new Error("Payments API returned " + payRes.status);
-      const payData = await payRes.json();
-      if (Array.isArray(payData)) {
-        setPayments(payData);
-      } else {
-        throw new Error("Payments API returned invalid format");
+      const regRes = await fetch("/api/registrations");
+      if (regRes.ok) {
+        const regData = await regRes.json();
+        if (Array.isArray(regData)) {
+          finalRegs = regData;
+        }
       }
-    } catch (e) {
-      console.warn("Falling back to local storage for payments...", e);
-      const stored = localStorage.getItem("bg_payments");
-      if (stored) {
-        setPayments(JSON.parse(stored));
-      } else {
-        setPayments(MOCK_PAYMENTS);
+    } catch (e) {}
+
+    const localRegs: Registration[] = JSON.parse(localStorage.getItem("bg_registrations") || "[]");
+    const combinedRegs = [...finalRegs];
+    for (const lr of localRegs) {
+      const exists = combinedRegs.some(r => (r._id && lr._id && r._id === lr._id) || (r.email && lr.email && r.email.toLowerCase() === lr.email.toLowerCase() && r.phone === lr.phone));
+      if (!exists) {
+        combinedRegs.push(lr);
       }
     }
+    setRegistrations(combinedRegs);
+
+    let finalPays: Payment[] = [];
+    try {
+      const payRes = await fetch("/api/payments");
+      if (payRes.ok) {
+        const payData = await payRes.json();
+        if (Array.isArray(payData)) {
+          finalPays = payData;
+        }
+      }
+    } catch (e) {}
+
+    const localPays: Payment[] = JSON.parse(localStorage.getItem("bg_payments") || "[]");
+    const combinedPays = [...finalPays];
+    for (const lp of localPays) {
+      const exists = combinedPays.some(p => (p._id && lp._id && p._id === lp._id) || (p.transactionId && lp.transactionId && p.transactionId === lp.transactionId));
+      if (!exists) {
+        combinedPays.push(lp);
+      }
+    }
+    setPayments(combinedPays);
   };
 
   const autoMigrateData = async () => {
@@ -3352,7 +3368,6 @@ const AdminPanel = () => {
         for(const reg of storedRegs) {
           if(!reg._id) await fetch("/api/registrations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(reg) });
         }
-        localStorage.removeItem("bg_registrations");
         migrated = true;
       }
       
@@ -3361,7 +3376,6 @@ const AdminPanel = () => {
         for(const pay of storedPays) {
           if(!pay._id) await fetch("/api/payments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(pay) });
         }
-        localStorage.removeItem("bg_payments");
         migrated = true;
       }
       
@@ -3372,7 +3386,6 @@ const AdminPanel = () => {
             name: sub.name, username: sub.username, password: sub.password, referralCode: sub.username + "10", status: sub.status, createdDate: sub.created || new Date().toISOString().split("T")[0]
           })});
         }
-        localStorage.removeItem("bg_subadmins");
         migrated = true;
       }
       
@@ -3381,13 +3394,11 @@ const AdminPanel = () => {
         for(const code of storedCodes) {
           if(!code._id) await fetch("/api/refcodes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(code) });
         }
-        localStorage.removeItem("bg_ref_codes");
         migrated = true;
       }
 
       if (migrated) {
         fetchRegistrationsAndPayments();
-        // Disabling reload to make it fully seamless
       }
     } catch(e) {
       console.error("Silent migration failed", e);
@@ -3396,8 +3407,20 @@ const AdminPanel = () => {
 
   useEffect(() => {
     autoMigrateData().then(() => fetchRegistrationsAndPayments());
-    const interval = setInterval(fetchRegistrationsAndPayments, 5000);
-    return () => clearInterval(interval);
+
+    window.addEventListener("bg_registration_added", fetchRegistrationsAndPayments);
+    window.addEventListener("bg_payment_added", fetchRegistrationsAndPayments);
+    window.addEventListener("storage", fetchRegistrationsAndPayments);
+    window.addEventListener("focus", fetchRegistrationsAndPayments);
+
+    const interval = setInterval(fetchRegistrationsAndPayments, 3000);
+    return () => {
+      window.removeEventListener("bg_registration_added", fetchRegistrationsAndPayments);
+      window.removeEventListener("bg_payment_added", fetchRegistrationsAndPayments);
+      window.removeEventListener("storage", fetchRegistrationsAndPayments);
+      window.removeEventListener("focus", fetchRegistrationsAndPayments);
+      clearInterval(interval);
+    };
   }, []);
 
   const handleDeleteRegistration = async (email: string, phone: string, id?: string) => {
