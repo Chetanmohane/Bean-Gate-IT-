@@ -6,19 +6,19 @@ interface ContactInfo {
   contactEmail?: string;
 }
 
-const DEFAULT_BANNER_PHONE = "+91 9752740090";
+const DEFAULT_BANNER_PHONE = "+91 74711 12020";
 
 const FooterBanner = () => {
   const [phone, setPhone] = useState(DEFAULT_BANNER_PHONE);
-  const [email, setEmail] = useState("beangate.official@gmail.com");
+  const [email, setEmail] = useState("info@beangates.com");
 
   const fetchConfig = () => {
     try {
       const s = localStorage.getItem("bg_plan_config");
       if (s) {
         const parsed = JSON.parse(s);
-        if (parsed.contactPhone) setPhone(parsed.contactPhone.split(",")[0].trim());
-        if (parsed.contactEmail) setEmail(parsed.contactEmail.split(",")[0].trim());
+        if (parsed.contactPhone) setPhone(parsed.contactPhone.split(/[\n,]/)[0].trim());
+        if (parsed.contactEmail) setEmail(parsed.contactEmail.split(/[\n,]/)[0].trim());
       }
     } catch (e) {}
 
@@ -26,8 +26,8 @@ const FooterBanner = () => {
       .then((res) => res.json())
       .then((data) => {
         if (data) {
-          if (data.contactPhone) setPhone(data.contactPhone.split(",")[0].trim());
-          if (data.contactEmail) setEmail(data.contactEmail.split(",")[0].trim());
+          if (data.contactPhone) setPhone(data.contactPhone.split(/[\n,]/)[0].trim());
+          if (data.contactEmail) setEmail(data.contactEmail.split(/[\n,]/)[0].trim());
         }
       })
       .catch(() => {});

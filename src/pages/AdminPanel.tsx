@@ -134,9 +134,9 @@ const DEFAULT_PLAN_CONFIG: PlanConfig = {
   whatsappPosition: "bottom-right",
   whatsappType: "number",
   whatsappGroupLink: "",
-  contactPhone: "+91 9752740090, 7471112020",
-  contactEmail: "beangate.official@gmail.com",
-  contactAddress: "BeanGate IT Solutions Pvt. Ltd.\nFlat No. A-4/501, Kokta Transport Nagar,\nBhopal (M.P.) – 462022",
+  contactPhone: "+91 74711 12020, +91 97527 40090",
+  contactEmail: "info@beangates.com, beangate.official@gmail.com",
+  contactAddress: "Flat No. A-4 / 501, Kokta Transport Nagar,\nBhopal, Madhya Pradesh – 462022",
   facebookUrl: "",
   instagramUrl: "",
   youtubeUrl: "",
@@ -415,37 +415,40 @@ const StatCard = ({ label, value, icon, iconBgClass }: { label: string; value: s
 // PLANS TAB
 // ═══════════════════════════════════════════════════════════════════════
 const PlansTab = () => {
-  const [cfg, setCfg] = useState<PlanConfig>(DEFAULT_PLAN_CONFIG);
+  const [cfg, setCfg] = useState<PlanConfig>(loadPlanConfig());
   const [saved, setSaved] = useState(false);
   const [dbId, setDbId] = useState<string | null>(null);
 
   useEffect(() => {
+    const local = loadPlanConfig();
     fetch("/api/planconfig")
       .then(res => res.json())
       .then(data => {
         if (data && typeof data === "object" && !data.message && (data.oneTimePrice || data.courseName)) {
-          setCfg({
+          const merged: PlanConfig = {
             ...DEFAULT_PLAN_CONFIG,
             ...data,
-            oneTimePrice: Number(data.oneTimePrice) || DEFAULT_PLAN_CONFIG.oneTimePrice,
-            oneTimeOriginalPrice: Number(data.oneTimeOriginalPrice) || DEFAULT_PLAN_CONFIG.oneTimeOriginalPrice,
-            installment1Price: Number(data.installment1Price) || DEFAULT_PLAN_CONFIG.installment1Price,
-            installment2Price: Number(data.installment2Price) || DEFAULT_PLAN_CONFIG.installment2Price,
-            discountPercent: Number(data.discountPercent) || DEFAULT_PLAN_CONFIG.discountPercent,
-            oneTimeDiscountPercent: Number(data.oneTimeDiscountPercent ?? data.discountPercent ?? 10),
-            installment1DiscountPercent: Number(data.installment1DiscountPercent ?? data.discountPercent ?? 10),
-            installment2DiscountPercent: Number(data.installment2DiscountPercent ?? data.discountPercent ?? 10),
-            oneTimeFeatures: Array.isArray(data.oneTimeFeatures) && data.oneTimeFeatures.length > 0 ? data.oneTimeFeatures : DEFAULT_PLAN_CONFIG.oneTimeFeatures,
-            installmentFeatures: Array.isArray(data.installmentFeatures) && data.installmentFeatures.length > 0 ? data.installmentFeatures : DEFAULT_PLAN_CONFIG.installmentFeatures,
-            courses: Array.isArray(data.courses) && data.courses.length > 0 ? data.courses : DEFAULT_PLAN_CONFIG.courses,
-            colleges: Array.isArray(data.colleges) && data.colleges.length > 0 ? data.colleges : DEFAULT_PLAN_CONFIG.colleges,
-            cities: Array.isArray(data.cities) && data.cities.length > 0 ? data.cities : DEFAULT_PLAN_CONFIG.cities,
-          });
+            ...local,
+            oneTimePrice: Number(data.oneTimePrice) || local.oneTimePrice || DEFAULT_PLAN_CONFIG.oneTimePrice,
+            oneTimeOriginalPrice: Number(data.oneTimeOriginalPrice) || local.oneTimeOriginalPrice || DEFAULT_PLAN_CONFIG.oneTimeOriginalPrice,
+            installment1Price: Number(data.installment1Price) || local.installment1Price || DEFAULT_PLAN_CONFIG.installment1Price,
+            installment2Price: Number(data.installment2Price) || local.installment2Price || DEFAULT_PLAN_CONFIG.installment2Price,
+            discountPercent: Number(data.discountPercent) || local.discountPercent || DEFAULT_PLAN_CONFIG.discountPercent,
+            oneTimeDiscountPercent: Number(data.oneTimeDiscountPercent ?? local.oneTimeDiscountPercent ?? 10),
+            installment1DiscountPercent: Number(data.installment1DiscountPercent ?? local.installment1DiscountPercent ?? 10),
+            installment2DiscountPercent: Number(data.installment2DiscountPercent ?? local.installment2DiscountPercent ?? 10),
+            oneTimeFeatures: Array.isArray(data.oneTimeFeatures) && data.oneTimeFeatures.length > 0 ? data.oneTimeFeatures : (local.oneTimeFeatures || DEFAULT_PLAN_CONFIG.oneTimeFeatures),
+            installmentFeatures: Array.isArray(data.installmentFeatures) && data.installmentFeatures.length > 0 ? data.installmentFeatures : (local.installmentFeatures || DEFAULT_PLAN_CONFIG.installmentFeatures),
+            courses: Array.isArray(data.courses) && data.courses.length > 0 ? data.courses : (local.courses || DEFAULT_PLAN_CONFIG.courses),
+            colleges: Array.isArray(data.colleges) && data.colleges.length > 0 ? data.colleges : (local.colleges || DEFAULT_PLAN_CONFIG.colleges),
+            cities: Array.isArray(data.cities) && data.cities.length > 0 ? data.cities : (local.cities || DEFAULT_PLAN_CONFIG.cities),
+          };
+          setCfg(merged);
+          savePlanConfig(merged);
           if (data._id) setDbId(data._id);
         } else {
-          // Fallback to local storage if API didn't return valid config
-          const local = loadPlanConfig();
           setCfg(local);
+          savePlanConfig(local);
         }
       })
       .catch(err => {
@@ -454,8 +457,13 @@ const PlansTab = () => {
       });
   }, []);
 
-  const update = (key: keyof PlanConfig, value: string | number | boolean | string[]) =>
-    setCfg(prev => ({ ...prev, [key]: value }));
+  const update = (key: keyof PlanConfig, value: string | number | boolean | string[]) => {
+    setCfg(prev => {
+      const updated = { ...prev, [key]: value };
+      savePlanConfig(updated);
+      return updated;
+    });
+  };
 
   const updateFeature = (plan: "oneTimeFeatures" | "installmentFeatures", idx: number, val: string) => {
     const arr = [...(cfg[plan] || [])];
@@ -470,10 +478,14 @@ const PlansTab = () => {
     update(plan, (cfg[plan] || []).filter((_, i) => i !== idx));
 
   const handleSave = async () => {
-    // Save to local storage for instant fallback
+    // Save to local storage for instant fallback and UI reactivity
     savePlanConfig(cfg);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
+
+    const payload = { ...cfg };
+    delete (payload as any)._id;
+    delete (payload as any).__v;
 
     // Sync with backend API database
     try {
@@ -481,7 +493,7 @@ const PlansTab = () => {
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cfg),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         const savedData = await res.json();

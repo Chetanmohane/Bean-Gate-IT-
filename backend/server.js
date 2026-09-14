@@ -154,15 +154,15 @@ const initializeDBData = async () => {
           updated = true;
         }
         if (!existing.contactPhone) {
-          existing.contactPhone = "+91 9752740090, 7471112020";
+          existing.contactPhone = "+91 74711 12020, +91 97527 40090";
           updated = true;
         }
         if (!existing.contactEmail) {
-          existing.contactEmail = "beangate.official@gmail.com";
+          existing.contactEmail = "info@beangates.com";
           updated = true;
         }
         if (!existing.contactAddress) {
-          existing.contactAddress = "BeanGate IT Solutions Pvt. Ltd.\nFlat No. A-4/501, Kokta Transport Nagar,\nBhopal (M.P.) – 462022";
+          existing.contactAddress = "Flat No. A-4 / 501, Kokta Transport Nagar,\nBhopal, Madhya Pradesh – 462022";
           updated = true;
         }
         if (existing.facebookUrl === undefined) {
@@ -327,6 +327,10 @@ app.delete('/api/refcodes/:id', async (req, res) => {
 // 4. Plan Config
 const saveOrUpdatePlanConfig = async (req, res) => {
   try {
+    const updateData = { ...req.body };
+    delete updateData._id;
+    delete updateData.__v;
+
     let targetId = req.params.id;
     let existing = null;
     if (targetId) {
@@ -336,19 +340,19 @@ const saveOrUpdatePlanConfig = async (req, res) => {
       existing = await PlanConfig.findOne();
     }
     if (existing) {
-      const bodyOffset = req.body.manualSeatsOffset !== undefined ? Number(req.body.manualSeatsOffset) : undefined;
-      const bodyCapacity = req.body.totalSeats !== undefined ? Number(req.body.totalSeats) : undefined;
+      const bodyOffset = updateData.manualSeatsOffset !== undefined ? Number(updateData.manualSeatsOffset) : undefined;
+      const bodyCapacity = updateData.totalSeats !== undefined ? Number(updateData.totalSeats) : undefined;
       const offsetChanged = bodyOffset !== undefined && bodyOffset !== existing.manualSeatsOffset;
       const capacityChanged = bodyCapacity !== undefined && bodyCapacity !== existing.totalSeats;
       if (offsetChanged || capacityChanged || existing.manualSeatsOffsetRegistrationsCount === undefined) {
-        req.body.seatsOffsetUpdatedAt = new Date();
+        updateData.seatsOffsetUpdatedAt = new Date();
         const regCount = await Registration.countDocuments();
-        req.body.manualSeatsOffsetRegistrationsCount = regCount;
+        updateData.manualSeatsOffsetRegistrationsCount = regCount;
       }
-      const updated = await PlanConfig.findByIdAndUpdate(existing._id, req.body, { new: true, runValidators: true });
+      const updated = await PlanConfig.findByIdAndUpdate(existing._id, updateData, { new: true, runValidators: true });
       return res.json(updated);
     }
-    const saved = await PlanConfig.create(req.body);
+    const saved = await PlanConfig.create(updateData);
     return res.status(201).json(saved);
   } catch (error) {
     console.error("Error saving plan config:", error);

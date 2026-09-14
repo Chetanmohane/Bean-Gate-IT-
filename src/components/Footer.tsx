@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaFacebookF, FaInstagram, FaYoutube, FaLinkedinIn, FaPhoneAlt, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaFacebookF, FaInstagram, FaYoutube, FaLinkedinIn, FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaGlobe } from 'react-icons/fa';
 import logo from "../assets/logo-beangate.png";
 import { Link } from 'react-router-dom';
 
@@ -14,9 +14,9 @@ interface ContactInfo {
 }
 
 const DEFAULT_CONTACT: ContactInfo = {
-  contactPhone: "+91 9752740090, 7471112020",
-  contactEmail: "beangate.official@gmail.com",
-  contactAddress: "BeanGate IT Solutions Pvt. Ltd.\nFlat No. A-4/501, Kokta Transport Nagar,\nBhopal (M.P.) – 462022",
+  contactPhone: "+91 74711 12020\n+91 97527 40090",
+  contactEmail: "info@beangates.com\nbeangate.official@gmail.com",
+  contactAddress: "Flat No. A-4 / 501, Kokta Transport Nagar,\nBhopal, Madhya Pradesh – 462022",
   facebookUrl: "",
   instagramUrl: "",
   youtubeUrl: "",
@@ -149,18 +149,43 @@ const Footer = () => {
             <h4 className="text-white font-bold uppercase tracking-wider mb-6">Contact Us</h4>
             <ul className="space-y-4 text-sm">
               <li className="flex items-start gap-3">
-                <FaPhoneAlt className="mt-1 text-blue-500 shrink-0" />
-                <span className="whitespace-pre-line">{phoneText}</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaEnvelope className="mt-1 text-blue-500 shrink-0" />
-                <a href={`mailto:${emailText.split(',')[0].trim()}`} className="hover:text-white transition break-all">
-                  {emailText}
+                <FaGlobe className="mt-1 text-blue-500 shrink-0" />
+                <a href="https://www.beangates.com" target="_blank" rel="noreferrer" className="hover:text-white transition font-medium">
+                  www.beangates.com
                 </a>
               </li>
               <li className="flex items-start gap-3">
+                <FaEnvelope className="mt-1 text-blue-500 shrink-0" />
+                <div className="flex flex-col gap-1">
+                  {emailText.split(/[\n,]/).map((emailItem, idx) => {
+                    const trimmed = emailItem.trim();
+                    if (!trimmed) return null;
+                    return (
+                      <a key={idx} href={`mailto:${trimmed}`} className="hover:text-white transition break-all font-medium block">
+                        {trimmed}
+                      </a>
+                    );
+                  })}
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <FaPhoneAlt className="mt-1 text-blue-500 shrink-0" />
+                <div className="flex flex-col gap-1">
+                  {phoneText.split(/[\n,]/).map((phoneNum, idx) => {
+                    const trimmed = phoneNum.trim();
+                    if (!trimmed) return null;
+                    const cleanNumber = trimmed.replace(/[^0-9+]/g, "");
+                    return (
+                      <a key={idx} href={`tel:${cleanNumber}`} className="hover:text-white transition font-medium block">
+                        {trimmed}
+                      </a>
+                    );
+                  })}
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
                 <FaMapMarkerAlt className="mt-1 text-blue-500 shrink-0" />
-                <span className="whitespace-pre-line leading-relaxed">{addressText}</span>
+                <span className="whitespace-pre-line leading-relaxed font-medium">{addressText}</span>
               </li>
             </ul>
           </div>
