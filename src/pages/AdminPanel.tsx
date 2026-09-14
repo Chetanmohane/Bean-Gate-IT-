@@ -486,7 +486,7 @@ const PlansTab = () => {
       {/* Course Info */}
       <Card className="p-6 mb-6 mt-6">
         <p className="text-sm font-extrabold text-slate-800 dark:text-white mb-4">Course Information</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className={labelCls}>Course Name</label>
             <input className={inputCls} value={cfg.courseName} onChange={e => update("courseName", e.target.value)} placeholder="e.g. MERN Stack" />
@@ -499,10 +499,56 @@ const PlansTab = () => {
             <label className={labelCls}>Hero Special Offer Price (₹)</label>
             <input type="number" min="0" className={inputCls} value={cfg.heroOfferPrice} onChange={e => update("heroOfferPrice", parseInt(e.target.value) || 0)} />
           </div>
+        </div>
+      </Card>
+
+      {/* DEDICATED REFERRAL DISCOUNT CONFIGURATION CARD */}
+      <Card className="p-6 mb-6 border-2 border-emerald-500/30 bg-emerald-500/5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-2.5 h-8 rounded-full bg-emerald-500"></div>
           <div>
-            <label className={labelCls}>Default Referral Discount (%)</label>
-            <input type="number" min="0" max="100" className={inputCls} value={cfg.discountPercent} onChange={e => update("discountPercent", parseInt(e.target.value) || 0)} />
+            <p className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+              🎁 Referral Discount Settings (%)
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+              Manage default referral discount percentages for all payment options in one central place.
+            </p>
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+          <div className="bg-white dark:bg-white/5 p-4 rounded-xl border border-slate-200 dark:border-white/10">
+            <label className={labelCls + " text-orange-600 dark:text-orange-400"}>One-Time Plan Discount (%)</label>
+            <input type="number" min="0" max="100" className={inputCls} value={oneTimeDiscPct} onChange={e => update("oneTimeDiscountPercent", parseInt(e.target.value) || 0)} />
+            <p className="text-[11px] text-slate-400 font-semibold mt-1">Discounted: ₹{discountedOneTime.toLocaleString("en-IN")}</p>
+          </div>
+
+          <div className="bg-white dark:bg-white/5 p-4 rounded-xl border border-slate-200 dark:border-white/10">
+            <label className={labelCls + " text-blue-600 dark:text-blue-400"}>1st Inst. Discount (%)</label>
+            <input type="number" min="0" max="100" className={inputCls} value={inst1DiscPct} onChange={e => update("installment1DiscountPercent", parseInt(e.target.value) || 0)} />
+            <p className="text-[11px] text-slate-400 font-semibold mt-1">Discounted: ₹{discountedInst1.toLocaleString("en-IN")}</p>
+          </div>
+
+          <div className="bg-white dark:bg-white/5 p-4 rounded-xl border border-slate-200 dark:border-white/10">
+            <label className={labelCls + " text-purple-600 dark:text-purple-400"}>2nd Inst. Discount (%)</label>
+            <input type="number" min="0" max="100" className={inputCls} value={inst2DiscPct} onChange={e => update("installment2DiscountPercent", parseInt(e.target.value) || 0)} />
+            <p className="text-[11px] text-slate-400 font-semibold mt-1">Discounted: ₹{discountedInst2.toLocaleString("en-IN")}</p>
+          </div>
+        </div>
+
+        <div className="bg-white/80 dark:bg-slate-900/80 border border-emerald-500/20 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs font-bold text-slate-700 dark:text-slate-300">
+          <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            One-Time: ₹{cfg.oneTimePrice} → <span className="font-extrabold text-sm">₹{discountedOneTime.toLocaleString("en-IN")}</span> ({oneTimeDiscPct}% OFF)
+          </span>
+          <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+            1st Inst: ₹{cfg.installment1Price} → <span className="font-extrabold text-sm">₹{discountedInst1.toLocaleString("en-IN")}</span> ({inst1DiscPct}% OFF)
+          </span>
+          <span className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400">
+            <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
+            2nd Inst: ₹{cfg.installment2Price} → <span className="font-extrabold text-sm">₹{discountedInst2.toLocaleString("en-IN")}</span> ({inst2DiscPct}% OFF)
+          </span>
         </div>
       </Card>
 
@@ -530,7 +576,7 @@ const PlansTab = () => {
             <p className="font-extrabold text-slate-800 dark:text-white text-sm">One-Time Payment Plan</p>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-5">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
             <div>
               <label className={labelCls}>Full Price (₹)</label>
               <input type="number" min="0" className={inputCls} value={cfg.oneTimePrice} onChange={e => update("oneTimePrice", parseInt(e.target.value) || 0)} />
@@ -539,14 +585,6 @@ const PlansTab = () => {
               <label className={labelCls}>Original Price (₹)</label>
               <input type="number" min="0" className={inputCls} value={cfg.oneTimeOriginalPrice} onChange={e => update("oneTimeOriginalPrice", parseInt(e.target.value) || 0)} />
             </div>
-            <div>
-              <label className={labelCls}>Referral Discount (%)</label>
-              <input type="number" min="0" max="100" className={inputCls} value={oneTimeDiscPct} onChange={e => update("oneTimeDiscountPercent", parseInt(e.target.value) || 0)} />
-            </div>
-          </div>
-
-          <div className="bg-indigo-50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/15 rounded-xl px-4 py-3 mb-5 text-xs font-semibold text-orange-700 dark:text-indigo-400">
-            With {oneTimeDiscPct}% referral code: <span className="font-extrabold">₹{discountedOneTime.toLocaleString("en-IN")}</span>
           </div>
 
           <div>
@@ -587,16 +625,7 @@ const PlansTab = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
-            <div>
-              <label className={labelCls}>1st Inst. Referral Discount (%)</label>
-              <input type="number" min="0" max="100" className={inputCls} value={inst1DiscPct} onChange={e => update("installment1DiscountPercent", parseInt(e.target.value) || 0)} />
-            </div>
-            <div>
-              <label className={labelCls}>2nd Inst. Referral Discount (%)</label>
-              <input type="number" min="0" max="100" className={inputCls} value={inst2DiscPct} onChange={e => update("installment2DiscountPercent", parseInt(e.target.value) || 0)} />
-            </div>
-          </div>
+
 
           <div className="bg-blue-50 dark:bg-blue-500/5 border border-blue-100 dark:border-blue-500/15 rounded-xl px-4 py-3 mb-5 text-xs font-semibold text-blue-700 dark:text-blue-400">
             With referral code: 1st ({inst1DiscPct}%) ₹{discountedInst1.toLocaleString("en-IN")} · 2nd ({inst2DiscPct}%) ₹{discountedInst2.toLocaleString("en-IN")}
