@@ -10,6 +10,7 @@ const Payment = require('./models/Payment');
 const RefCode = require('./models/RefCode');
 const PlanConfig = require('./models/PlanConfig');
 const SubAdmin = require('./models/SubAdmin');
+const MasterclassReg = require('./models/MasterclassReg');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -303,7 +304,12 @@ app.post('/api/registrations', async (req, res) => {
 
 app.delete('/api/registrations/:id', async (req, res) => {
   try {
-    await Registration.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      await Registration.findByIdAndDelete(id);
+    } else {
+      await Registration.deleteMany({ $or: [{ email: id }, { phone: id }] });
+    }
     res.json({ message: 'Registration deleted' });
   } catch (error) { res.status(500).json({ message: error.message }); }
 });
@@ -333,7 +339,12 @@ app.post('/api/payments', async (req, res) => {
 
 app.delete('/api/payments/:id', async (req, res) => {
   try {
-    await Payment.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      await Payment.findByIdAndDelete(id);
+    } else {
+      await Payment.deleteMany({ $or: [{ transactionId: id }, { email: id }] });
+    }
     res.json({ message: 'Payment deleted' });
   } catch (error) { res.status(500).json({ message: error.message }); }
 });
@@ -363,7 +374,12 @@ app.put('/api/refcodes/:id', async (req, res) => {
 
 app.delete('/api/refcodes/:id', async (req, res) => {
   try {
-    await RefCode.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      await RefCode.findByIdAndDelete(id);
+    } else {
+      await RefCode.deleteMany({ code: id });
+    }
     res.json({ message: 'RefCode deleted' });
   } catch (error) { res.status(500).json({ message: error.message }); }
 });
@@ -377,7 +393,7 @@ const saveOrUpdatePlanConfig = async (req, res) => {
 
     let targetId = req.params.id;
     let existing = null;
-    if (targetId) {
+    if (targetId && mongoose.Types.ObjectId.isValid(targetId)) {
       existing = await PlanConfig.findById(targetId);
     }
     if (!existing) {
@@ -439,14 +455,49 @@ app.put('/api/subadmins/:id', async (req, res) => {
 
 app.delete('/api/subadmins/:id', async (req, res) => {
   try {
-    await SubAdmin.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      await SubAdmin.findByIdAndDelete(id);
+    } else {
+      await SubAdmin.deleteMany({ username: id });
+    }
     res.json({ message: 'SubAdmin deleted' });
   } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+// 6. Masterclass Registrations
+app.get('/api/masterclass-registrations', async (req, res) => {
+  try {
+    const data = await MasterclassReg.find().sort({ _id: -1 });
+    res.json(data);
+  } catch (error) { res.status(500).json({ message: error.message }); }
 });
+
+app.post('/api/masterclass-registrations', async (req, res) => {
+  try {
+    const newReg = new MasterclassReg(req.body);
+    const saved = await newReg.save();
+    res.status(201).json(saved);
+  } catch (error) { res.status(400).json({ message: error.message }); }
+});
+
+app.delete('/api/masterclass-registrations/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      await MasterclassReg.findByIdAndDelete(id);
+    } else {
+      await MasterclassReg.deleteMany({ $or: [{ email: id }, { phone: id }] });
+    }
+    res.json({ message: 'Masterclass Registration deleted' });
+  } catch (error) { res.status(500).json({ message: error.message }); }
+});
+
+// Start Server
+if (!process.env.VERCEL && require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
 
 module.exports = app;

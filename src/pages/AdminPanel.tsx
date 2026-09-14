@@ -5,13 +5,25 @@ import {
   FaChartBar, FaCheckCircle, FaClock, FaSearch,
   FaEye, FaEyeSlash, FaPlus, FaTrash, FaCopy,
   FaBars, FaTimes, FaShieldAlt, FaDatabase,
-  FaSun, FaMoon, FaChevronDown, FaChevronUp, FaLink, FaEdit, FaArrowLeft, FaWhatsapp
+  FaSun, FaMoon, FaChevronDown, FaChevronUp, FaLink, FaEdit, FaArrowLeft, FaWhatsapp, FaPlayCircle
 } from "react-icons/fa";
 import { ThemeContext } from "../contexts/ThemeContext";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 
 // ─── Types ─────────────────────────────────────────────────────────────
+interface MasterclassReg {
+  _id?: string;
+  id?: string;
+  name: string;
+  email: string;
+  phone: string;
+  college: string;
+  city: string;
+  experience: string;
+  timestamp: string;
+}
+
 interface Registration {
   name: string;
   email: string;
@@ -1741,7 +1753,7 @@ const ReferralTab = () => {
       </div>
 
       {/* Desktop Table View */}
-      <Card className="hidden md:block overflow-hidden">
+      <Card className="hidden lg:block overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[700px]">
             <thead>
@@ -1757,6 +1769,7 @@ const ReferralTab = () => {
             </thead>
             <tbody>
               {filteredCodes.map((c, i) => {
+                const idx = codes.findIndex(x => x.code === c.code);
                 const planLabel = c.applicablePlan === "one-time" ? "One-Time Only" : c.applicablePlan === "installment" ? "Installment Only" : "All Plans";
                 const planBadgeCls = c.applicablePlan === "one-time" 
                   ? "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border-amber-200 dark:border-amber-500/20"
@@ -1786,13 +1799,13 @@ const ReferralTab = () => {
                     </td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-300 text-sm font-medium">{c.created}</td>
                     <td className="px-6 py-4">
-                      <button onClick={() => toggleCode(i)}
+                      <button onClick={() => toggleCode(idx !== -1 ? idx : i)}
                         className={`text-xs font-bold px-3 py-1.5 rounded-full border cursor-pointer transition duration-200 ${c.active && c.uses === 0 ? "bg-green-50 text-green-600 border-green-100 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20" : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-white/5 dark:text-slate-400 dark:border-white/10"}`}>
                         {c.active && c.uses === 0 ? "Available" : c.uses > 0 ? "Used" : "Inactive"}
                       </button>
                     </td>
                     <td className="px-6 py-4">
-                      <button onClick={() => deleteCode(i)} className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition bg-transparent border-none cursor-pointer p-1">
+                      <button onClick={() => deleteCode(idx !== -1 ? idx : i)} className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition bg-transparent border-none cursor-pointer p-1">
                         <FaTrash className="text-sm" />
                       </button>
                     </td>
@@ -1953,12 +1966,12 @@ const SubAdminCodesTab = ({ username }: { username: string }) => {
                     </td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-300 text-sm font-medium">{c.created}</td>
                     <td className="px-6 py-4">
-                      <span className={`text-xs font-bold px-3 py-1.5 rounded-full border ${
+                      <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${
                         c.uses > 0
                           ? "bg-slate-100 text-slate-500 border-slate-200 dark:bg-white/5 dark:text-slate-400 dark:border-white/10"
                           : "bg-green-50 text-green-600 border-green-100 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20"
                       }`}>
-                        {c.uses > 0 ? "✓ Used" : "Available"}
+                        {c.uses > 0 ? "Used" : "Available"}
                       </span>
                     </td>
                   </tr>
@@ -2374,7 +2387,7 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
                                   ? "bg-green-50 text-green-600 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20"
                                   : "bg-red-50 text-red-500 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20"
                             }`}>
-                              {c.code}
+                              {c.code} {c.uses > 0 ? "(Used)" : c.active ? "(Active)" : "(Inactive)"}
                             </span>
                           ))}
                         </div>
@@ -2394,17 +2407,20 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
                               .filter(p => p.email.toLowerCase() === r.email.toLowerCase())
                               .reduce((acc, p) => acc + parseInt(p.planAmount.replace(/[₹,]/g, "") || "0"), 0);
                             return (
-                              <div key={ri} className="bg-slate-50/50 dark:bg-white/[0.02] border border-slate-150 dark:border-white/5 p-3 rounded-lg text-xs space-y-1">
+                              <div key={ri} className="bg-slate-50/50 dark:bg-white/[0.02] border border-slate-150 dark:border-white/5 p-3 rounded-lg text-xs space-y-1.5">
                                 <div className="flex justify-between items-start">
                                   <div>
                                     <p className="font-bold text-slate-800 dark:text-white">{r.name}</p>
-                                    <p className="text-[10px] text-slate-500 mt-0.5">{r.email}</p>
+                                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">{r.email} · {r.phone}</p>
                                   </div>
-                                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400">₹{totalPaid.toLocaleString("en-IN")}</span>
+                                  <div className="text-right">
+                                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400 block">₹{totalPaid.toLocaleString("en-IN")}</span>
+                                    {studentPayment && <span className="text-[9px] text-slate-400 dark:text-slate-500">{studentPayment.planTitle}</span>}
+                                  </div>
                                 </div>
-                                <div className="flex justify-between text-[10px] text-slate-500 pt-1.5 border-t border-slate-100 dark:border-white/5 mt-1.5">
-                                  <span>{r.course}</span>
-                                  <span className="font-mono bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-1 py-0.5 rounded">{r.referralCode}</span>
+                                <div className="flex justify-between items-center text-[10px] text-slate-500 pt-1.5 border-t border-slate-100 dark:border-white/5 mt-1">
+                                  <span className="bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 px-1.5 py-0.5 rounded font-medium">{r.course}</span>
+                                  <span className="font-mono bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded font-bold">{r.referralCode}</span>
                                 </div>
                               </div>
                             );
@@ -2796,7 +2812,7 @@ const RegistrationsTab = ({
       </div>
 
       {/* Mobile Card List View */}
-      <div className="md:hidden space-y-4 mb-6">
+      <div className="lg:hidden space-y-4 mb-6">
         {filtered.map((r, i) => {
           const hasPayment = payments.some(p => p.email.toLowerCase() === r.email.toLowerCase() || p.phone === r.phone);
           return (
@@ -2806,11 +2822,14 @@ const RegistrationsTab = ({
                   <h4 className="font-extrabold text-slate-900 dark:text-white text-base">{r.name}</h4>
                   <p className="text-slate-550 dark:text-slate-400 text-xs mt-0.5 break-all">{r.email}</p>
                 </div>
-                <div className="shrink-0">
+                <div className="shrink-0 flex flex-col items-end gap-1">
                   {hasPayment ? (
                     <span className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[10px] font-black tracking-wider uppercase px-2.5 py-1 rounded-full border border-emerald-100 dark:border-emerald-500/20">Paid</span>
                   ) : (
                     <span className="bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 text-[10px] font-black tracking-wider uppercase px-2.5 py-1 rounded-full border border-rose-100 dark:border-rose-500/20">Unpaid</span>
+                  )}
+                  {r.referralCode && (
+                    <span className="font-mono bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[9px] font-bold px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-500/20">{r.referralCode}</span>
                   )}
                 </div>
               </div>
@@ -2868,12 +2887,12 @@ const RegistrationsTab = ({
       </div>
 
       {/* Desktop Table View */}
-      <Card className="hidden md:block overflow-hidden">
+      <Card className="hidden lg:block overflow-hidden">
         <div className="overflow-x-auto w-full max-w-full">
           <table className="w-full text-sm min-w-[800px]">
             <thead>
               <tr className="bg-slate-50/80 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
-                {["Name", "Email", "Phone", "Course", "College", "City", "Payment Status", "Time"].map(h => (
+                {["Name", "Email", "Phone", "Course", "College", "City", "Payment Status", "Ref Code", "Time"].map(h => (
                   <th key={h} className="text-left px-5 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
                 ))}
                 {userRole === "admin" && (
@@ -2899,6 +2918,13 @@ const RegistrationsTab = ({
                         <span className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-full border border-emerald-100 dark:border-emerald-500/20">Paid</span>
                       ) : (
                         <span className="bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 text-xs font-bold px-2.5 py-1 rounded-full border border-rose-100 dark:border-rose-500/20">Unpaid</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      {r.referralCode ? (
+                        <span className="font-mono bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-500/20">{r.referralCode}</span>
+                      ) : (
+                        <span className="text-slate-400 text-xs">-</span>
                       )}
                     </td>
                     <td className="px-5 py-4 text-slate-400 dark:text-slate-500 text-xs font-semibold whitespace-nowrap">{r.timestamp}</td>
@@ -3251,12 +3277,15 @@ const PaymentsTab = ({
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h4 className="font-extrabold text-slate-900 dark:text-white text-base">{p.name}</h4>
-                  <p className="text-slate-550 dark:text-slate-400 text-xs mt-0.5 break-all">{p.email}</p>
+                  <p className="text-slate-550 dark:text-slate-400 text-xs mt-0.5 break-all font-mono">{p.email}{p.phone ? ` · ${p.phone}` : ""}</p>
                 </div>
-                <div className="shrink-0">
+                <div className="shrink-0 flex flex-col items-end gap-1">
                   <span className={`text-[9px] font-black tracking-wider px-2 py-0.5 rounded uppercase ${getPlanBadgeClass(p.planTitle)}`}>
                     {p.planTitle}
                   </span>
+                  {p.course && (
+                    <span className="bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 text-[9px] font-bold px-2 py-0.5 rounded border border-blue-100 dark:border-blue-500/20">{p.course}</span>
+                  )}
                 </div>
               </div>
 
@@ -3402,9 +3431,294 @@ const PaymentsTab = ({
 };
 
 // ═══════════════════════════════════════════════════════════════════════
+// MASTERCLASS TAB
+// ═══════════════════════════════════════════════════════════════════════
+const MasterclassTab = ({
+  registrations,
+  onDelete
+}: {
+  registrations: MasterclassReg[];
+  onDelete: (email: string, phone: string, id?: string) => void;
+}) => {
+  const [search, setSearch] = useState("");
+  const [filterExp, setFilterExp] = useState("All");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  const filtered = registrations.filter(r => {
+    const matchesSearch =
+      (r.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (r.email || "").toLowerCase().includes(search.toLowerCase()) ||
+      (r.phone || "").includes(search) ||
+      (r.college || "").toLowerCase().includes(search.toLowerCase()) ||
+      (r.city || "").toLowerCase().includes(search.toLowerCase());
+    if (!matchesSearch) return false;
+
+    if (filterExp !== "All" && r.experience !== filterExp) return false;
+
+    if (r.timestamp) {
+      try {
+        const rDate = new Date(r.timestamp);
+        if (startDate) {
+          const sDate = new Date(startDate);
+          sDate.setHours(0, 0, 0, 0);
+          if (rDate < sDate) return false;
+        }
+        if (endDate) {
+          const eDate = new Date(endDate);
+          eDate.setHours(23, 59, 59, 999);
+          if (rDate > eDate) return false;
+        }
+      } catch (e) {}
+    }
+
+    return true;
+  });
+
+  const handleDownloadCSV = () => {
+    if (filtered.length === 0) {
+      alert("No data to download.");
+      return;
+    }
+    const headers = ["Name", "Email", "Phone", "College", "City", "Current Status", "Timestamp"];
+    const rows = filtered.map(r => [
+      `"${r.name}"`,
+      `"${r.email}"`,
+      `"${r.phone}"`,
+      `"${r.college || "N/A"}"`,
+      `"${r.city || "N/A"}"`,
+      `"${r.experience || "Student"}"`,
+      `"${r.timestamp || ""}"`
+    ].join(","));
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `masterclass_registrations_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const totalCount = filtered.length;
+  const uniqueCities = Array.from(new Set(filtered.map(r => r.city).filter(Boolean))).length;
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h2 className="text-xl font-extrabold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+          <FaPlayCircle className="text-amber-500" /> Masterclass Registrations
+        </h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+          Students who registered via the Live Masterclass Popup on the website.
+        </p>
+      </div>
+
+      {/* Overview Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div className="bg-white dark:bg-[#0e1726]/40 backdrop-blur-md border border-slate-100 dark:border-white/5 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+          <div>
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Total Registered</p>
+            <h3 className="text-2xl font-black text-amber-500 tracking-tight">{totalCount}</h3>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center border border-amber-100/30 dark:border-amber-500/15">
+            <FaPlayCircle className="text-amber-500 text-lg" />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#0e1726]/40 backdrop-blur-md border border-slate-100 dark:border-white/5 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+          <div>
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Cities Covered</p>
+            <h3 className="text-2xl font-black text-indigo-600 dark:text-indigo-400 tracking-tight">{uniqueCities}</h3>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center border border-indigo-100/30 dark:border-indigo-500/15">
+            <FaUsers className="text-indigo-500 text-lg" />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#0e1726]/40 backdrop-blur-md border border-slate-100 dark:border-white/5 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+          <div>
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Masterclass Status</p>
+            <h3 className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">Live Active</h3>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center border border-emerald-100/30 dark:border-emerald-500/15">
+            <FaCheckCircle className="text-emerald-500 text-lg" />
+          </div>
+        </div>
+      </div>
+
+      {/* Search & Filters */}
+      <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full">
+          <div className="relative lg:col-span-2">
+            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, email, phone, city..."
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200"
+            />
+          </div>
+
+          <select
+            value={filterExp}
+            onChange={(e) => setFilterExp(e.target.value)}
+            className="w-full px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-sm outline-none focus:border-indigo-500 transition duration-200 cursor-pointer"
+          >
+            <option value="All">All Statuses</option>
+            <option value="College Student (CS/IT)">College Student (CS/IT)</option>
+            <option value="College Student (Non-CS)">College Student (Non-CS)</option>
+            <option value="Job Seeker / Fresher">Job Seeker / Fresher</option>
+            <option value="Working Professional">Working Professional</option>
+          </select>
+
+          <div className="flex items-center gap-2 w-full">
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-1/2 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-xs outline-none focus:border-indigo-500 transition duration-200 cursor-pointer"
+            />
+            <span className="text-slate-400 text-xs">to</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-1/2 px-3 py-2.5 bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-800 dark:text-white text-xs outline-none focus:border-indigo-500 transition duration-200 cursor-pointer"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            onClick={handleDownloadCSV}
+            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition duration-200 cursor-pointer border-none shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto"
+          >
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Card List View */}
+      <div className="lg:hidden space-y-4 mb-6">
+        {filtered.length === 0 ? (
+          <div className="bg-white dark:bg-[#0e1726]/80 p-8 text-center text-slate-400 dark:text-slate-500 rounded-3xl border border-slate-100 dark:border-white/5 font-semibold text-sm">
+            No Masterclass registrations found.
+          </div>
+        ) : (
+          filtered.map((r, i) => (
+            <Card key={i} className="p-5 space-y-3.5 border border-slate-100 dark:border-white/5">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h4 className="font-extrabold text-slate-900 dark:text-white text-base">{r.name}</h4>
+                  <p className="text-slate-550 dark:text-slate-400 text-xs mt-0.5 break-all font-mono">{r.email}</p>
+                </div>
+                <span className="bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] font-black tracking-wider uppercase px-2.5 py-1 rounded-full border border-amber-100 dark:border-amber-500/20">
+                  Masterclass
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs border-t border-b border-slate-100 dark:border-white/5 py-3">
+                <div>
+                  <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">Phone</span>
+                  <p className="text-slate-800 dark:text-slate-200 font-mono font-medium mt-0.5">{r.phone}</p>
+                </div>
+                <div>
+                  <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">Status</span>
+                  <div className="mt-0.5">
+                    <span className="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-[10px] font-bold px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-500/20">{r.experience || "Student"}</span>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">College</span>
+                  <p className="text-slate-800 dark:text-slate-200 font-semibold mt-0.5 truncate">{r.college || "N/A"}</p>
+                </div>
+                <div>
+                  <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">City</span>
+                  <p className="text-slate-800 dark:text-slate-200 font-semibold mt-0.5">{r.city || "N/A"}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-xs pt-1">
+                <span className="text-slate-450 dark:text-slate-500 font-semibold">{r.timestamp}</span>
+                <button
+                  onClick={() => onDelete(r.email, r.phone, r._id || r.id)}
+                  className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center"
+                  title="Delete Registration"
+                >
+                  <FaTrash className="text-xs" />
+                </button>
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <Card className="hidden lg:block overflow-hidden">
+        <div className="overflow-x-auto w-full max-w-full">
+          <table className="w-full text-sm min-w-[850px]">
+            <thead>
+              <tr className="bg-slate-50/80 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
+                {["Name", "Email", "Phone", "College", "City", "Status / Role", "Time", "Actions"].map(h => (
+                  <th key={h} className="text-left px-5 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-6 py-8 text-center text-slate-400 dark:text-slate-500 text-sm font-semibold">
+                    No Masterclass registrations found.
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((r, i) => (
+                  <tr key={i} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/5 transition">
+                    <td className="px-5 py-4 font-bold text-slate-900 dark:text-white text-sm whitespace-nowrap">{r.name}</td>
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm whitespace-nowrap">{r.email}</td>
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm font-mono whitespace-nowrap">{r.phone}</td>
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm whitespace-nowrap">{r.college}</td>
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 text-sm whitespace-nowrap">{r.city}</td>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <span className="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-xs font-bold px-2.5 py-1 rounded-full border border-indigo-100 dark:border-indigo-500/20">
+                        {r.experience || "Student"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-slate-400 dark:text-slate-500 text-xs font-semibold whitespace-nowrap">{r.timestamp}</td>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => onDelete(r.email, r.phone, r._id || r.id)}
+                        className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition border-none cursor-pointer flex items-center justify-center"
+                        title="Delete Registration"
+                      >
+                        <FaTrash className="text-sm" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════
 // DASHBOARD TAB
 // ═══════════════════════════════════════════════════════════════════════
-const DashboardTab = ({ registrations, payments }: { registrations: Registration[], payments: Payment[] }) => {
+const DashboardTab = ({
+  registrations,
+  payments,
+  masterclassCount = 0
+}: {
+  registrations: Registration[];
+  payments: Payment[];
+  masterclassCount?: number;
+}) => {
   const refCodes = loadCodes();
   const activeCodes = refCodes.filter(c => c.active).length;
 
@@ -3428,8 +3742,9 @@ const DashboardTab = ({ registrations, payments }: { registrations: Registration
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 font-medium">Quick summary of all students, payments and referral activity.</p>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5 mb-8">
-        <Card className="hover:scale-[1.02] transition-transform duration-200"><StatCard label="Total Registrations" value={registrations.length} icon={<FaUsers className="text-blue-600 dark:text-blue-400 text-lg" />} iconBgClass="bg-blue-50 dark:bg-blue-500/10" /></Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+        <Card className="hover:scale-[1.02] transition-transform duration-200"><StatCard label="Course Regs" value={registrations.length} icon={<FaUsers className="text-blue-600 dark:text-blue-400 text-lg" />} iconBgClass="bg-blue-50 dark:bg-blue-500/10" /></Card>
+        <Card className="hover:scale-[1.02] transition-transform duration-200"><StatCard label="Masterclass Regs" value={masterclassCount} icon={<FaPlayCircle className="text-amber-500 text-lg" />} iconBgClass="bg-amber-50 dark:bg-amber-500/10" /></Card>
         <Card className="hover:scale-[1.02] transition-transform duration-200"><StatCard label="Payments Received" value={payments.length} icon={<FaMoneyBillWave className="text-green-600 dark:text-green-400 text-lg" />} iconBgClass="bg-green-50 dark:bg-green-500/10" /></Card>
         <Card className="hover:scale-[1.02] transition-transform duration-200"><StatCard label="Active Ref Codes" value={activeCodes} icon={<FaTags className="text-indigo-600 dark:text-indigo-400 text-lg" />} iconBgClass="bg-indigo-50 dark:bg-indigo-500/10" /></Card>
         <Card className="hover:scale-[1.02] transition-transform duration-200"><StatCard label="Revenue (Est.)" value={"₹" + payments.reduce((acc, p) => acc + parseInt(String(p.planAmount).replace(/[₹,]/g, "") || "0"), 0).toLocaleString()} icon={<FaChartBar className="text-violet-600 dark:text-violet-400 text-lg" />} iconBgClass="bg-violet-50 dark:bg-violet-500/10" /></Card>
@@ -3497,6 +3812,7 @@ const AdminPanel = () => {
   // Stateful student registration lists backed by localStorage
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [masterclassRegs, setMasterclassRegs] = useState<MasterclassReg[]>([]);
 
   const fetchRegistrationsAndPayments = async () => {
     // Sync referral codes from database first so sub-admin filtering works properly
@@ -3522,6 +3838,11 @@ const AdminPanel = () => {
       deletedPays = JSON.parse(localStorage.getItem("bg_deleted_pays") || "[]");
     } catch(e){}
 
+    let deletedMc: any[] = [];
+    try {
+      deletedMc = JSON.parse(localStorage.getItem("bg_deleted_masterclass") || "[]");
+    } catch(e){}
+
     const isRegDeleted = (r: any) => {
       return deletedRegs.some(d => 
         (d.id && ((r._id && r._id === d.id) || (r.id && r.id === d.id))) ||
@@ -3535,6 +3856,14 @@ const AdminPanel = () => {
         (d.id && ((p._id && p._id === d.id) || (p.id && p.id === d.id))) ||
         (d.transactionId && p.transactionId && p.transactionId === d.transactionId) ||
         (d.email && p.email && p.email.toLowerCase() === d.email.toLowerCase())
+      );
+    };
+
+    const isMcDeleted = (m: any) => {
+      return deletedMc.some(d => 
+        (d.id && ((m._id && m._id === d.id) || (m.id && m.id === d.id))) ||
+        (d.email && m.email && m.email.toLowerCase() === d.email.toLowerCase()) ||
+        (d.phone && m.phone && m.phone === d.phone)
       );
     };
 
@@ -3597,6 +3926,29 @@ const AdminPanel = () => {
       }
     }
     setPayments(combinedPays);
+
+    // Fetch Masterclass Registrations
+    let finalMc: MasterclassReg[] = [];
+    try {
+      const mcRes = await fetch("/api/masterclass-registrations");
+      if (mcRes.ok) {
+        const mcData = await mcRes.json();
+        if (Array.isArray(mcData)) finalMc = mcData;
+      }
+    } catch (e) {}
+
+    let storedMcStr = localStorage.getItem("bg_masterclass_regs");
+    const localMc: MasterclassReg[] = storedMcStr ? JSON.parse(storedMcStr) : [];
+
+    const filteredServerMc = finalMc.filter(m => !isMcDeleted(m));
+    const filteredLocalMc = localMc.filter(m => !isMcDeleted(m));
+
+    const combinedMc = [...filteredServerMc];
+    for (const lm of filteredLocalMc) {
+      const exists = combinedMc.some(m => (m._id && lm._id && m._id === lm._id) || (m.email && lm.email && m.email.toLowerCase() === lm.email.toLowerCase() && m.phone === lm.phone));
+      if (!exists) combinedMc.push(lm);
+    }
+    setMasterclassRegs(combinedMc);
   };
 
   const autoMigrateData = async () => {
@@ -3649,6 +4001,7 @@ const AdminPanel = () => {
 
     window.addEventListener("bg_registration_added", fetchRegistrationsAndPayments);
     window.addEventListener("bg_payment_added", fetchRegistrationsAndPayments);
+    window.addEventListener("bg_masterclass_added", fetchRegistrationsAndPayments);
     window.addEventListener("storage", fetchRegistrationsAndPayments);
     window.addEventListener("focus", fetchRegistrationsAndPayments);
 
@@ -3656,11 +4009,54 @@ const AdminPanel = () => {
     return () => {
       window.removeEventListener("bg_registration_added", fetchRegistrationsAndPayments);
       window.removeEventListener("bg_payment_added", fetchRegistrationsAndPayments);
+      window.removeEventListener("bg_masterclass_added", fetchRegistrationsAndPayments);
       window.removeEventListener("storage", fetchRegistrationsAndPayments);
       window.removeEventListener("focus", fetchRegistrationsAndPayments);
       clearInterval(interval);
     };
   }, []);
+
+  const handleDeleteMasterclassReg = async (email: string, phone: string, id?: string) => {
+    setMasterclassRegs(prev => prev.filter(r => {
+      if (id && ((r as any)._id === id || (r as any).id === id)) return false;
+      if (email && r.email && r.email.toLowerCase() === email.toLowerCase()) return false;
+      if (phone && r.phone && r.phone === phone) return false;
+      return true;
+    }));
+
+    try {
+      const deletedStr = localStorage.getItem("bg_deleted_masterclass") || "[]";
+      const deletedList: any[] = JSON.parse(deletedStr);
+      deletedList.push({ id, email: email ? email.toLowerCase() : "", phone });
+      localStorage.setItem("bg_deleted_masterclass", JSON.stringify(deletedList));
+    } catch(e){}
+
+    try {
+      const storedStr = localStorage.getItem("bg_masterclass_regs");
+      if (storedStr) {
+        const stored: MasterclassReg[] = JSON.parse(storedStr);
+        const updated = stored.filter(r => {
+          if (id && ((r as any)._id === id || (r as any).id === id)) return false;
+          if (email && r.email && r.email.toLowerCase() === email.toLowerCase()) return false;
+          if (phone && r.phone && r.phone === phone) return false;
+          return true;
+        });
+        localStorage.setItem("bg_masterclass_regs", JSON.stringify(updated));
+        window.dispatchEvent(new Event("bg_masterclass_added"));
+        window.dispatchEvent(new Event("storage"));
+      }
+    } catch (e) {
+      console.error("Error updating localStorage on masterclass delete", e);
+    }
+
+    if (id) {
+      try {
+        await fetch(`/api/masterclass-registrations/${id}`, { method: "DELETE" });
+      } catch (e) {
+        console.error("Failed to delete masterclass registration from database", e);
+      }
+    }
+  };
 
   const handleDeleteRegistration = async (email: string, phone: string, id?: string) => {
     setDeleteRegTarget({ email, phone, id });
@@ -4038,6 +4434,7 @@ const AdminPanel = () => {
     ? [
         { id: "dashboard",     label: "Dashboard",     icon: <FaChartBar /> },
         { id: "registrations", label: "Registrations", icon: <FaUsers /> },
+        { id: "masterclass",   label: "Masterclass",   icon: <FaPlayCircle /> },
         { id: "payments",      label: "Payments",      icon: <FaMoneyBillWave /> },
         { id: "plans",         label: "Plans",         icon: <FaTags /> },
         { id: "referrals",     label: "Referral Codes",icon: <FaTags /> },
@@ -4046,6 +4443,7 @@ const AdminPanel = () => {
     : [
         { id: "dashboard",     label: "Dashboard",     icon: <FaChartBar /> },
         { id: "registrations", label: "Registrations", icon: <FaUsers /> },
+        { id: "masterclass",   label: "Masterclass",   icon: <FaPlayCircle /> },
         { id: "payments",      label: "Payments",      icon: <FaMoneyBillWave /> },
         { id: "mycodes",       label: "My Codes",      icon: <FaTags /> },
       ];
@@ -4110,6 +4508,7 @@ const AdminPanel = () => {
               <h1 className="font-extrabold text-slate-900 dark:text-white text-base capitalize leading-tight">
                 {activeTab === "dashboard" ? "Dashboard" 
                   : activeTab === "registrations" ? "Registrations" 
+                  : activeTab === "masterclass" ? "Masterclass Registrations"
                   : activeTab === "payments" ? "Payments" 
                   : activeTab === "plans" ? "Plans & Pricing" 
                   : activeTab === "referrals" ? "Referral Codes"
@@ -4142,7 +4541,7 @@ const AdminPanel = () => {
 
         {/* Page Content */}
         <main className="flex-1 p-4 sm:p-5 lg:p-6 min-w-0 overflow-x-hidden overflow-y-auto">
-          {activeTab === "dashboard"      && <DashboardTab registrations={filteredRegistrations} payments={filteredPayments} />}
+          {activeTab === "dashboard"      && <DashboardTab registrations={filteredRegistrations} payments={filteredPayments} masterclassCount={masterclassRegs.length} />}
           {activeTab === "registrations"  && (
             <RegistrationsTab
               registrations={filteredRegistrations}
@@ -4153,6 +4552,7 @@ const AdminPanel = () => {
               onEditRegistration={handleEditRegistration}
             />
           )}
+          {activeTab === "masterclass"    && <MasterclassTab registrations={masterclassRegs} onDelete={handleDeleteMasterclassReg} />}
           {activeTab === "payments"       && <PaymentsTab payments={filteredPayments} onAddPayment={openDueModal} onDeletePayment={handleDeletePayment} userRole={userRole} />}
           {activeTab === "plans"          && <PlansTab />}
           {activeTab === "referrals"      && userRole === "admin" && <ReferralTab />}
