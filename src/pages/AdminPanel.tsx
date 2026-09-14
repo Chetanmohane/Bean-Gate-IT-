@@ -3820,7 +3820,7 @@ const AdminPanel = () => {
       const codeRes = await fetch("/api/refcodes");
       if (codeRes.ok) {
         const codeData = await codeRes.json();
-        if (Array.isArray(codeData) && codeData.length > 0) {
+        if (Array.isArray(codeData)) {
           localStorage.setItem("bg_ref_codes", JSON.stringify(codeData));
         }
       }
@@ -3828,127 +3828,59 @@ const AdminPanel = () => {
       console.warn("Failed to sync referral codes from server:", e);
     }
 
-    let deletedRegs: any[] = [];
-    try {
-      deletedRegs = JSON.parse(localStorage.getItem("bg_deleted_regs") || "[]");
-    } catch(e){}
-
-    let deletedPays: any[] = [];
-    try {
-      deletedPays = JSON.parse(localStorage.getItem("bg_deleted_pays") || "[]");
-    } catch(e){}
-
-    let deletedMc: any[] = [];
-    try {
-      deletedMc = JSON.parse(localStorage.getItem("bg_deleted_masterclass") || "[]");
-    } catch(e){}
-
-    const isRegDeleted = (r: any) => {
-      return deletedRegs.some(d => 
-        (d.id && ((r._id && r._id === d.id) || (r.id && r.id === d.id))) ||
-        (d.email && r.email && r.email.toLowerCase() === d.email.toLowerCase()) ||
-        (d.phone && r.phone && r.phone === d.phone)
-      );
-    };
-
-    const isPayDeleted = (p: any) => {
-      return deletedPays.some(d => 
-        (d.id && ((p._id && p._id === d.id) || (p.id && p.id === d.id))) ||
-        (d.transactionId && p.transactionId && p.transactionId === d.transactionId) ||
-        (d.email && p.email && p.email.toLowerCase() === d.email.toLowerCase())
-      );
-    };
-
-    const isMcDeleted = (m: any) => {
-      return deletedMc.some(d => 
-        (d.id && ((m._id && m._id === d.id) || (m.id && m.id === d.id))) ||
-        (d.email && m.email && m.email.toLowerCase() === d.email.toLowerCase()) ||
-        (d.phone && m.phone && m.phone === d.phone)
-      );
-    };
-
-    let finalRegs: Registration[] = [];
+    // 1. Fetch Registrations from Database
     try {
       const regRes = await fetch("/api/registrations");
       if (regRes.ok) {
         const regData = await regRes.json();
         if (Array.isArray(regData)) {
-          finalRegs = regData;
+          setRegistrations(regData);
+          localStorage.setItem("bg_registrations", JSON.stringify(regData));
         }
+      } else {
+        const storedStr = localStorage.getItem("bg_registrations");
+        if (storedStr) setRegistrations(JSON.parse(storedStr));
       }
-    } catch (e) {}
-
-    let storedRegStr = localStorage.getItem("bg_registrations");
-    if (!storedRegStr && finalRegs.length === 0 && deletedRegs.length === 0) {
-      localStorage.setItem("bg_registrations", JSON.stringify(INITIAL_DEFAULT_REGISTRATIONS));
-      storedRegStr = JSON.stringify(INITIAL_DEFAULT_REGISTRATIONS);
+    } catch (e) {
+      const storedStr = localStorage.getItem("bg_registrations");
+      if (storedStr) setRegistrations(JSON.parse(storedStr));
     }
-    const localRegs: Registration[] = storedRegStr ? JSON.parse(storedRegStr) : (deletedRegs.length > 0 ? [] : INITIAL_DEFAULT_REGISTRATIONS);
 
-    const filteredServerRegs = finalRegs.filter(r => !isRegDeleted(r));
-    const filteredLocalRegs = localRegs.filter(r => !isRegDeleted(r));
-
-    const combinedRegs = [...filteredServerRegs];
-    for (const lr of filteredLocalRegs) {
-      const exists = combinedRegs.some(r => (r._id && lr._id && r._id === lr._id) || (r.email && lr.email && r.email.toLowerCase() === lr.email.toLowerCase() && r.phone === lr.phone));
-      if (!exists) {
-        combinedRegs.push(lr);
-      }
-    }
-    setRegistrations(combinedRegs);
-
-    let finalPays: Payment[] = [];
+    // 2. Fetch Payments from Database
     try {
       const payRes = await fetch("/api/payments");
       if (payRes.ok) {
         const payData = await payRes.json();
         if (Array.isArray(payData)) {
-          finalPays = payData;
+          setPayments(payData);
+          localStorage.setItem("bg_payments", JSON.stringify(payData));
         }
+      } else {
+        const storedStr = localStorage.getItem("bg_payments");
+        if (storedStr) setPayments(JSON.parse(storedStr));
       }
-    } catch (e) {}
-
-    let storedPayStr = localStorage.getItem("bg_payments");
-    if (!storedPayStr && finalPays.length === 0 && deletedPays.length === 0) {
-      localStorage.setItem("bg_payments", JSON.stringify(INITIAL_DEFAULT_PAYMENTS));
-      storedPayStr = JSON.stringify(INITIAL_DEFAULT_PAYMENTS);
+    } catch (e) {
+      const storedStr = localStorage.getItem("bg_payments");
+      if (storedStr) setPayments(JSON.parse(storedStr));
     }
-    const localPays: Payment[] = storedPayStr ? JSON.parse(storedPayStr) : (deletedPays.length > 0 ? [] : INITIAL_DEFAULT_PAYMENTS);
 
-    const filteredServerPays = finalPays.filter(p => !isPayDeleted(p));
-    const filteredLocalPays = localPays.filter(p => !isPayDeleted(p));
-
-    const combinedPays = [...filteredServerPays];
-    for (const lp of filteredLocalPays) {
-      const exists = combinedPays.some(p => (p._id && lp._id && p._id === lp._id) || (p.transactionId && lp.transactionId && p.transactionId === lp.transactionId));
-      if (!exists) {
-        combinedPays.push(lp);
-      }
-    }
-    setPayments(combinedPays);
-
-    // Fetch Masterclass Registrations
-    let finalMc: MasterclassReg[] = [];
+    // 3. Fetch Masterclass Registrations from Database
     try {
       const mcRes = await fetch("/api/masterclass-registrations");
       if (mcRes.ok) {
         const mcData = await mcRes.json();
-        if (Array.isArray(mcData)) finalMc = mcData;
+        if (Array.isArray(mcData)) {
+          setMasterclassRegs(mcData);
+          localStorage.setItem("bg_masterclass_regs", JSON.stringify(mcData));
+        }
+      } else {
+        const storedStr = localStorage.getItem("bg_masterclass_regs");
+        if (storedStr) setMasterclassRegs(JSON.parse(storedStr));
       }
-    } catch (e) {}
-
-    let storedMcStr = localStorage.getItem("bg_masterclass_regs");
-    const localMc: MasterclassReg[] = storedMcStr ? JSON.parse(storedMcStr) : [];
-
-    const filteredServerMc = finalMc.filter(m => !isMcDeleted(m));
-    const filteredLocalMc = localMc.filter(m => !isMcDeleted(m));
-
-    const combinedMc = [...filteredServerMc];
-    for (const lm of filteredLocalMc) {
-      const exists = combinedMc.some(m => (m._id && lm._id && m._id === lm._id) || (m.email && lm.email && m.email.toLowerCase() === lm.email.toLowerCase() && m.phone === lm.phone));
-      if (!exists) combinedMc.push(lm);
+    } catch (e) {
+      const storedStr = localStorage.getItem("bg_masterclass_regs");
+      if (storedStr) setMasterclassRegs(JSON.parse(storedStr));
     }
-    setMasterclassRegs(combinedMc);
   };
 
   const autoMigrateData = async () => {
@@ -4024,38 +3956,15 @@ const AdminPanel = () => {
       return true;
     }));
 
-    try {
-      const deletedStr = localStorage.getItem("bg_deleted_masterclass") || "[]";
-      const deletedList: any[] = JSON.parse(deletedStr);
-      deletedList.push({ id, email: email ? email.toLowerCase() : "", phone });
-      localStorage.setItem("bg_deleted_masterclass", JSON.stringify(deletedList));
-    } catch(e){}
-
-    try {
-      const storedStr = localStorage.getItem("bg_masterclass_regs");
-      if (storedStr) {
-        const stored: MasterclassReg[] = JSON.parse(storedStr);
-        const updated = stored.filter(r => {
-          if (id && ((r as any)._id === id || (r as any).id === id)) return false;
-          if (email && r.email && r.email.toLowerCase() === email.toLowerCase()) return false;
-          if (phone && r.phone && r.phone === phone) return false;
-          return true;
-        });
-        localStorage.setItem("bg_masterclass_regs", JSON.stringify(updated));
-        window.dispatchEvent(new Event("bg_masterclass_added"));
-        window.dispatchEvent(new Event("storage"));
-      }
-    } catch (e) {
-      console.error("Error updating localStorage on masterclass delete", e);
-    }
-
-    if (id) {
+    const target = id || email || phone;
+    if (target) {
       try {
-        await fetch(`/api/masterclass-registrations/${id}`, { method: "DELETE" });
+        await fetch(`/api/masterclass-registrations/${target}`, { method: "DELETE" });
       } catch (e) {
         console.error("Failed to delete masterclass registration from database", e);
       }
     }
+    fetchRegistrationsAndPayments();
   };
 
   const handleDeleteRegistration = async (email: string, phone: string, id?: string) => {
@@ -4073,40 +3982,17 @@ const AdminPanel = () => {
       return true;
     }));
 
-    try {
-      const deletedStr = localStorage.getItem("bg_deleted_regs") || "[]";
-      const deletedList: any[] = JSON.parse(deletedStr);
-      deletedList.push({ id, email: email ? email.toLowerCase() : "", phone });
-      localStorage.setItem("bg_deleted_regs", JSON.stringify(deletedList));
-    } catch(e){}
-
-    try {
-      const storedStr = localStorage.getItem("bg_registrations");
-      if (storedStr) {
-        const stored: Registration[] = JSON.parse(storedStr);
-        const updated = stored.filter(r => {
-          if (id && ((r as any)._id === id || (r as any).id === id)) return false;
-          if (email && r.email && r.email.toLowerCase() === email.toLowerCase()) return false;
-          if (phone && r.phone && r.phone === phone) return false;
-          return true;
-        });
-        localStorage.setItem("bg_registrations", JSON.stringify(updated));
-        window.dispatchEvent(new Event("bg_registration_added"));
-        window.dispatchEvent(new Event("storage"));
-      }
-    } catch (e) {
-      console.error("Error updating localStorage on registration delete", e);
-    }
-
     setDeleteRegTarget(null);
 
-    if (id) {
+    const target = id || email || phone;
+    if (target) {
       try {
-        await fetch(`/api/registrations/${id}`, { method: "DELETE" });
+        await fetch(`/api/registrations/${target}`, { method: "DELETE" });
       } catch (e) {
         console.error("Failed to delete registration from database", e);
       }
     }
+    fetchRegistrationsAndPayments();
   };
 
   const handleDeletePayment = async (email: string, transactionId: string, id?: string) => {
@@ -4124,40 +4010,17 @@ const AdminPanel = () => {
       return true;
     }));
 
-    try {
-      const deletedStr = localStorage.getItem("bg_deleted_pays") || "[]";
-      const deletedList: any[] = JSON.parse(deletedStr);
-      deletedList.push({ id, transactionId, email: email ? email.toLowerCase() : "" });
-      localStorage.setItem("bg_deleted_pays", JSON.stringify(deletedList));
-    } catch(e){}
-
-    try {
-      const storedStr = localStorage.getItem("bg_payments");
-      if (storedStr) {
-        const stored: Payment[] = JSON.parse(storedStr);
-        const updated = stored.filter(p => {
-          if (id && ((p as any)._id === id || (p as any).id === id)) return false;
-          if (transactionId && p.transactionId && p.transactionId === transactionId) return false;
-          if (email && p.email && p.email.toLowerCase() === email.toLowerCase()) return false;
-          return true;
-        });
-        localStorage.setItem("bg_payments", JSON.stringify(updated));
-        window.dispatchEvent(new Event("bg_payment_added"));
-        window.dispatchEvent(new Event("storage"));
-      }
-    } catch (e) {
-      console.error("Error updating localStorage on payment delete", e);
-    }
-
     setDeletePayTarget(null);
 
-    if (id) {
+    const target = id || transactionId || email;
+    if (target) {
       try {
-        await fetch(`/api/payments/${id}`, { method: "DELETE" });
+        await fetch(`/api/payments/${target}`, { method: "DELETE" });
       } catch (e) {
         console.error("Failed to delete payment from database", e);
       }
     }
+    fetchRegistrationsAndPayments();
   };
 
   const handleEditRegistration = async (oldEmail: string, oldPhone: string, updatedReg: Registration, id?: string) => {
