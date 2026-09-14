@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { FaPhoneAlt, FaEnvelope, FaGlobe } from "react-icons/fa";
 import { usePlanConfig } from "../utils/planConfig";
 
