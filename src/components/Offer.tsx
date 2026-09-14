@@ -257,6 +257,36 @@ const Offer = ({
 
   const [errors, setErrors] = useState<Record<string, boolean>>({});
 
+  const [phoneErrorMsg, setPhoneErrorMsg] = useState("");
+
+  const checkIsPhoneRegistered = (inputPhone: string): boolean => {
+    const cleanInput = inputPhone.replace(/[^0-9]/g, "");
+    if (!cleanInput || cleanInput.length < 10) return false;
+    const target10 = cleanInput.slice(-10);
+
+    const existsInRaw = rawRegistrations.some((r: any) => {
+      const p = String(r.phone || "").replace(/[^0-9]/g, "");
+      return p.length >= 10 && p.slice(-10) === target10;
+    });
+    if (existsInRaw) return true;
+
+    try {
+      const stored = localStorage.getItem("bg_registrations");
+      if (stored) {
+        const list = JSON.parse(stored);
+        if (Array.isArray(list)) {
+          const existsInLocal = list.some((r: any) => {
+            const p = String(r.phone || "").replace(/[^0-9]/g, "");
+            return p.length >= 10 && p.slice(-10) === target10;
+          });
+          if (existsInLocal) return true;
+        }
+      }
+    } catch (e) {}
+
+    return false;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
@@ -265,7 +295,13 @@ const Offer = ({
       if (onlyNums.length <= 10) {
         setFormData({ ...formData, [name]: onlyNums });
       }
-      if (errors[name]) setErrors({ ...errors, [name]: false });
+      if (onlyNums.length === 10 && checkIsPhoneRegistered(onlyNums)) {
+        setPhoneErrorMsg("Yeh mobile number pehle se registered hai! Ek mobile number se dobara registration nahi kar sakte.");
+        setErrors(prev => ({ ...prev, phone: true }));
+      } else {
+        setPhoneErrorMsg("");
+        if (errors[name]) setErrors({ ...errors, [name]: false });
+      }
       return;
     }
 
@@ -287,7 +323,14 @@ const Offer = ({
     // Validation
     const newErrors: Record<string, boolean> = {};
     if (!formData.name.trim()) newErrors.name = true;
-    if (!formData.phone.trim() || formData.phone.length !== 10) newErrors.phone = true;
+    if (!formData.phone.trim() || formData.phone.length !== 10) {
+      newErrors.phone = true;
+      setPhoneErrorMsg("Mobile Number must be exactly 10 digits *");
+    } else if (checkIsPhoneRegistered(formData.phone)) {
+      newErrors.phone = true;
+      setPhoneErrorMsg("Yeh mobile number pehle se registered hai! Ek mobile number se dobara registration nahi kar sakte.");
+    }
+
     if (!formData.email.trim()) newErrors.email = true;
     if (!formData.course) newErrors.course = true;
     if (!formData.college) newErrors.college = true;
@@ -510,6 +553,11 @@ const Offer = ({
                     placeholder="XXXXXXXXXX"
                     className={`w-full px-4 py-2 bg-gray-50 border rounded-lg focus:outline-none text-sm text-gray-900 transition-colors ${errors.phone ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-gray-200 focus:ring-1 focus:ring-orange-500'}`}
                   />
+                  {errors.phone && (
+                    <p className="text-[11px] text-red-500 font-bold mt-1 flex items-center gap-1">
+                      <span>⚠️ {phoneErrorMsg || "Mobile Number must be exactly 10 digits *"}</span>
+                    </p>
+                  )}
                 </div>
               </div>
 

@@ -272,6 +272,18 @@ app.get('/api/registrations', async (req, res) => {
 
 app.post('/api/registrations', async (req, res) => {
   try {
+    const { phone } = req.body;
+    if (phone) {
+      const cleanPhone = String(phone).replace(/[^0-9]/g, "").slice(-10);
+      if (cleanPhone.length === 10) {
+        const existing = await Registration.findOne({
+          phone: { $regex: cleanPhone + "$" }
+        });
+        if (existing) {
+          return res.status(400).json({ message: "This mobile number is already registered!" });
+        }
+      }
+    }
     const newReg = new Registration(req.body);
     const saved = await newReg.save();
     res.status(201).json(saved);
