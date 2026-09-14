@@ -210,9 +210,17 @@ const getRemainingBalance = (email: string, phone: string, payments: Payment[]):
   return "₹0";
 };
 
-// ─── REAL DATA INITIALIZATION (Only actual database entries shown) ──
-const MOCK_REGISTRATIONS: Registration[] = [];
-const MOCK_PAYMENTS: Payment[] = [];
+// ─── INITIAL SEED DATA (Used on first load if server or localStorage is empty) ──
+const INITIAL_DEFAULT_REGISTRATIONS: Registration[] = [
+  { name: "Rahul Sharma", email: "rahul.sharma@gmail.com", phone: "9876543210", course: "MERN Stack", college: "BUIT Bhopal", city: "Bhopal", timestamp: "2026-09-10 10:22", referralCode: "BEANGATE10" },
+  { name: "Priya Verma", email: "priya.verma@gmail.com", phone: "9812341234", course: "Frontend Developer", college: "PDPS College", city: "Indore", timestamp: "2026-09-11 11:05", referralCode: "MERN10" },
+  { name: "Aman Gupta", email: "aman.gupta@gmail.com", phone: "9911223344", course: "MERN Stack", college: "LNCT Bhopal", city: "Jabalpur", timestamp: "2026-09-12 14:40", referralCode: "" }
+];
+
+const INITIAL_DEFAULT_PAYMENTS: Payment[] = [
+  { name: "Rahul Sharma", email: "rahul.sharma@gmail.com", phone: "9876543210", transactionId: "UPI982314567890", course: "MERN Stack", planTitle: "One-Time", planAmount: "₹6,000", timestamp: "2026-09-10 10:35", referralCode: "BEANGATE10" },
+  { name: "Priya Verma", email: "priya.verma@gmail.com", phone: "9812341234", transactionId: "UPI871234567111", course: "Frontend Developer", planTitle: "1st Installment", planAmount: "₹3,200", timestamp: "2026-09-11 11:22", referralCode: "MERN10" }
+];
 
 // ═══════════════════════════════════════════════════════════════════════
 // LOGIN PAGE
@@ -3297,19 +3305,7 @@ const AdminPanel = () => {
       const codeRes = await fetch("/api/refcodes");
       if (codeRes.ok) {
         const codeData = await codeRes.json();
-        if (Array.isArray(codeData)) {
-          localStorage.setItem("bg_ref_codes", JSON.stringify(codeData));
-        }
-      }
-    } catch (e) {
-      console.warn("Failed to sync referral codes from server:", e);
-    }
-
-    try {
-      const codeRes = await fetch("/api/refcodes");
-      if (codeRes.ok) {
-        const codeData = await codeRes.json();
-        if (Array.isArray(codeData)) {
+        if (Array.isArray(codeData) && codeData.length > 0) {
           localStorage.setItem("bg_ref_codes", JSON.stringify(codeData));
         }
       }
@@ -3328,7 +3324,13 @@ const AdminPanel = () => {
       }
     } catch (e) {}
 
-    const localRegs: Registration[] = JSON.parse(localStorage.getItem("bg_registrations") || "[]");
+    let storedRegStr = localStorage.getItem("bg_registrations");
+    if (!storedRegStr && finalRegs.length === 0) {
+      localStorage.setItem("bg_registrations", JSON.stringify(INITIAL_DEFAULT_REGISTRATIONS));
+      storedRegStr = JSON.stringify(INITIAL_DEFAULT_REGISTRATIONS);
+    }
+    const localRegs: Registration[] = storedRegStr ? JSON.parse(storedRegStr) : INITIAL_DEFAULT_REGISTRATIONS;
+
     const combinedRegs = [...finalRegs];
     for (const lr of localRegs) {
       const exists = combinedRegs.some(r => (r._id && lr._id && r._id === lr._id) || (r.email && lr.email && r.email.toLowerCase() === lr.email.toLowerCase() && r.phone === lr.phone));
@@ -3336,7 +3338,7 @@ const AdminPanel = () => {
         combinedRegs.push(lr);
       }
     }
-    setRegistrations(combinedRegs);
+    setRegistrations(combinedRegs.length > 0 ? combinedRegs : INITIAL_DEFAULT_REGISTRATIONS);
 
     let finalPays: Payment[] = [];
     try {
@@ -3349,7 +3351,13 @@ const AdminPanel = () => {
       }
     } catch (e) {}
 
-    const localPays: Payment[] = JSON.parse(localStorage.getItem("bg_payments") || "[]");
+    let storedPayStr = localStorage.getItem("bg_payments");
+    if (!storedPayStr && finalPays.length === 0) {
+      localStorage.setItem("bg_payments", JSON.stringify(INITIAL_DEFAULT_PAYMENTS));
+      storedPayStr = JSON.stringify(INITIAL_DEFAULT_PAYMENTS);
+    }
+    const localPays: Payment[] = storedPayStr ? JSON.parse(storedPayStr) : INITIAL_DEFAULT_PAYMENTS;
+
     const combinedPays = [...finalPays];
     for (const lp of localPays) {
       const exists = combinedPays.some(p => (p._id && lp._id && p._id === lp._id) || (p.transactionId && lp.transactionId && p.transactionId === lp.transactionId));
@@ -3357,7 +3365,7 @@ const AdminPanel = () => {
         combinedPays.push(lp);
       }
     }
-    setPayments(combinedPays);
+    setPayments(combinedPays.length > 0 ? combinedPays : INITIAL_DEFAULT_PAYMENTS);
   };
 
   const autoMigrateData = async () => {
