@@ -222,17 +222,9 @@ const getRemainingBalance = (email: string, phone: string, payments: Payment[]):
   return "₹0";
 };
 
-// ─── INITIAL SEED DATA (Used on first load if server or localStorage is empty) ──
-const INITIAL_DEFAULT_REGISTRATIONS: Registration[] = [
-  { name: "Rahul Sharma", email: "rahul.sharma@gmail.com", phone: "9876543210", course: "MERN Stack", college: "BUIT Bhopal", city: "Bhopal", timestamp: "2026-09-10 10:22", referralCode: "BEANGATE10" },
-  { name: "Priya Verma", email: "priya.verma@gmail.com", phone: "9812341234", course: "Frontend Developer", college: "PDPS College", city: "Indore", timestamp: "2026-09-11 11:05", referralCode: "MERN10" },
-  { name: "Aman Gupta", email: "aman.gupta@gmail.com", phone: "9911223344", course: "MERN Stack", college: "LNCT Bhopal", city: "Jabalpur", timestamp: "2026-09-12 14:40", referralCode: "" }
-];
-
-const INITIAL_DEFAULT_PAYMENTS: Payment[] = [
-  { name: "Rahul Sharma", email: "rahul.sharma@gmail.com", phone: "9876543210", transactionId: "UPI982314567890", course: "MERN Stack", planTitle: "One-Time", planAmount: "₹6,000", timestamp: "2026-09-10 10:35", referralCode: "BEANGATE10" },
-  { name: "Priya Verma", email: "priya.verma@gmail.com", phone: "9812341234", transactionId: "UPI871234567111", course: "Frontend Developer", planTitle: "1st Installment", planAmount: "₹3,200", timestamp: "2026-09-11 11:22", referralCode: "MERN10" }
-];
+// ─── INITIAL SEED DATA ──
+const INITIAL_DEFAULT_REGISTRATIONS: Registration[] = [];
+const INITIAL_DEFAULT_PAYMENTS: Payment[] = [];
 
 // ═══════════════════════════════════════════════════════════════════════
 // LOGIN PAGE
@@ -3885,45 +3877,59 @@ const AdminPanel = () => {
 
   const autoMigrateData = async () => {
     try {
+      const dummyEmails = ["rahul.sharma@gmail.com", "priya.verma@gmail.com", "aman.gupta@gmail.com"];
       let migrated = false;
+
       const storedRegs = JSON.parse(localStorage.getItem("bg_registrations") || "[]");
       if (storedRegs.length > 0) {
-        for(const reg of storedRegs) {
-          if(!reg._id) await fetch("/api/registrations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(reg) });
+        for (const reg of storedRegs) {
+          if (!reg._id && !dummyEmails.includes(reg.email?.toLowerCase())) {
+            await fetch("/api/registrations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(reg) });
+            migrated = true;
+          }
         }
-        migrated = true;
       }
-      
+
       const storedPays = JSON.parse(localStorage.getItem("bg_payments") || "[]");
       if (storedPays.length > 0) {
-        for(const pay of storedPays) {
-          if(!pay._id) await fetch("/api/payments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(pay) });
+        for (const pay of storedPays) {
+          if (!pay._id && !dummyEmails.includes(pay.email?.toLowerCase())) {
+            await fetch("/api/payments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(pay) });
+            migrated = true;
+          }
         }
-        migrated = true;
       }
-      
+
       const storedSubs = JSON.parse(localStorage.getItem("bg_subadmins") || "[]");
       if (storedSubs.length > 0) {
-        for(const sub of storedSubs) {
-          if(!sub._id) await fetch("/api/subadmins", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
-            name: sub.name, username: sub.username, password: sub.password, referralCode: sub.username + "10", status: sub.status, createdDate: sub.created || new Date().toISOString().split("T")[0]
-          })});
+        for (const sub of storedSubs) {
+          if (!sub._id) {
+            await fetch("/api/subadmins", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                name: sub.name, username: sub.username, password: sub.password, referralCode: sub.username + "10", status: sub.status, createdDate: sub.created || new Date().toISOString().split("T")[0]
+              })
+            });
+            migrated = true;
+          }
         }
-        migrated = true;
       }
-      
+
       const storedCodes = JSON.parse(localStorage.getItem("bg_ref_codes") || "[]");
       if (storedCodes.length > 0) {
-        for(const code of storedCodes) {
-          if(!code._id) await fetch("/api/refcodes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(code) });
+        for (const code of storedCodes) {
+          if (!code._id) {
+            await fetch("/api/refcodes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(code) });
+            migrated = true;
+          }
         }
-        migrated = true;
       }
 
       if (migrated) {
         fetchRegistrationsAndPayments();
       }
-    } catch(e) {
+    } catch (e) {
       console.error("Silent migration failed", e);
     }
   };
