@@ -1406,6 +1406,19 @@ const ReferralTab = () => {
     };
 
     fetchCodes();
+    const handleSync = () => fetchCodes();
+
+    window.addEventListener("storage", handleSync);
+    window.addEventListener("bg_refcode_updated", handleSync);
+    window.addEventListener("focus", handleSync);
+    const interval = setInterval(handleSync, 3000);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleSync);
+      window.removeEventListener("bg_refcode_updated", handleSync);
+      window.removeEventListener("focus", handleSync);
+    };
   }, []);
   const [newCode, setNewCode] = useState("");
   const [newDiscountPercent, setNewDiscountPercent] = useState<number>(10);
@@ -1501,6 +1514,16 @@ const ReferralTab = () => {
       creator: "admin"
     };
 
+    const updatedCodes = [...codes, newCodeObj];
+    setCodes(updatedCodes);
+    try {
+      localStorage.setItem("bg_ref_codes", JSON.stringify(updatedCodes));
+      window.dispatchEvent(new Event("bg_refcode_updated"));
+      window.dispatchEvent(new Event("storage"));
+    } catch(e) {}
+
+    setNewCode("");
+
     try {
       const res = await fetch("/api/refcodes", {
         method: "POST",
@@ -1509,29 +1532,33 @@ const ReferralTab = () => {
       });
       if (res.ok) {
         const saved = await res.json();
-        setCodes([...codes, saved]);
+        setCodes(prev => prev.map(c => c.code === trimmed ? { ...c, ...saved } : c));
       }
-    } catch(err) { console.error(err); }
-
-    setNewCode("");
+    } catch(err) {
+      console.warn("API refcode save failed, saved locally:", err);
+    }
   };
 
   const toggleCode = async (idx: number) => {
     const codeObj = codes[idx];
-    const id = (codeObj as any)._id;
-    if (!id) return;
-
+    const newCodes = codes.map((c, i) => i === idx ? { ...c, active: !c.active } : c);
+    setCodes(newCodes);
     try {
-      const res = await fetch(`/api/refcodes/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ active: !codeObj.active })
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        setCodes(codes.map((c, i) => i === idx ? updated : c));
-      }
-    } catch(err) { console.error(err); }
+      localStorage.setItem("bg_ref_codes", JSON.stringify(newCodes));
+      window.dispatchEvent(new Event("bg_refcode_updated"));
+      window.dispatchEvent(new Event("storage"));
+    } catch(e){}
+
+    const id = (codeObj as any)._id;
+    if (id) {
+      try {
+        await fetch(`/api/refcodes/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ active: !codeObj.active })
+        });
+      } catch(err) { console.error(err); }
+    }
   };
 
   const deleteCode = async (idx: number) => {
@@ -1539,7 +1566,13 @@ const ReferralTab = () => {
     const newCodes = codes.filter((_, i) => i !== idx);
     setCodes(newCodes);
     try {
+      const deletedStr = localStorage.getItem("bg_deleted_codes") || "[]";
+      const deletedList: any[] = JSON.parse(deletedStr);
+      deletedList.push({ id: (codeObj as any)._id, code: codeObj.code });
+      localStorage.setItem("bg_deleted_codes", JSON.stringify(deletedList));
       localStorage.setItem("bg_ref_codes", JSON.stringify(newCodes));
+      window.dispatchEvent(new Event("bg_refcode_updated"));
+      window.dispatchEvent(new Event("storage"));
     } catch(e){}
 
     const id = (codeObj as any)._id;
@@ -1994,6 +2027,19 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
     };
 
     fetchSubadmins();
+    const handleSync = () => fetchSubadmins();
+
+    window.addEventListener("storage", handleSync);
+    window.addEventListener("bg_subadmin_updated", handleSync);
+    window.addEventListener("focus", handleSync);
+    const interval = setInterval(handleSync, 3000);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleSync);
+      window.removeEventListener("bg_subadmin_updated", handleSync);
+      window.removeEventListener("focus", handleSync);
+    };
   }, []);
 
   // Get all referral codes created by a sub-admin
@@ -2045,6 +2091,8 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
       setSubadmins(updatedList);
       try {
         localStorage.setItem("bg_subadmins", JSON.stringify(updatedList));
+        window.dispatchEvent(new Event("bg_subadmin_updated"));
+        window.dispatchEvent(new Event("storage"));
       } catch(e){}
 
       try {
@@ -2081,6 +2129,8 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
       setSubadmins(updatedList);
       try {
         localStorage.setItem("bg_subadmins", JSON.stringify(updatedList));
+        window.dispatchEvent(new Event("bg_subadmin_updated"));
+        window.dispatchEvent(new Event("storage"));
       } catch(e){}
 
       // 2. Auto-create & register referral code for this SubAdmin in local storage & DB
@@ -2100,6 +2150,8 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
           };
           const updatedRefCodes = [...storedCodes, autoCodeObj];
           localStorage.setItem("bg_ref_codes", JSON.stringify(updatedRefCodes));
+          window.dispatchEvent(new Event("bg_refcode_updated"));
+          window.dispatchEvent(new Event("storage"));
           fetch("/api/refcodes", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -2134,20 +2186,25 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
 
   const toggleStatus = async (idx: number) => {
     const sub = subadmins[idx];
-    const id = (sub as any)._id || sub.id;
     const newStatus = sub.status === "Active" ? "Suspended" : "Active";
-    
+    const updatedList = subadmins.map((s, i) => i === idx ? { ...s, status: newStatus } : s);
+    setSubadmins(updatedList);
     try {
-      const res = await fetch(`/api/subadmins/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus })
-      });
-      if(res.ok) {
-        const updated = await res.json();
-        setSubadmins(subadmins.map((s, i) => i === idx ? updated : s));
-      }
-    } catch(err) { console.error(err); }
+      localStorage.setItem("bg_subadmins", JSON.stringify(updatedList));
+      window.dispatchEvent(new Event("bg_subadmin_updated"));
+      window.dispatchEvent(new Event("storage"));
+    } catch(e){}
+
+    const id = (sub as any)._id || sub.id;
+    if (id) {
+      try {
+        await fetch(`/api/subadmins/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus })
+        });
+      } catch(err) { console.error(err); }
+    }
   };
 
   const confirmDeleteSub = async () => {
@@ -2156,7 +2213,13 @@ const SubAdminsTab = ({ registrations, payments }: { registrations: Registration
     const newSubs = subadmins.filter((_, i) => i !== deleteConfirmIdx);
     setSubadmins(newSubs);
     try {
+      const deletedStr = localStorage.getItem("bg_deleted_subs") || "[]";
+      const deletedList: any[] = JSON.parse(deletedStr);
+      deletedList.push({ id: (sub as any)._id, username: sub.username });
+      localStorage.setItem("bg_deleted_subs", JSON.stringify(deletedList));
       localStorage.setItem("bg_subadmins", JSON.stringify(newSubs));
+      window.dispatchEvent(new Event("bg_subadmin_updated"));
+      window.dispatchEvent(new Event("storage"));
     } catch(e){}
 
     setDeleteConfirmIdx(null);
@@ -3632,6 +3695,8 @@ const AdminPanel = () => {
           return true;
         });
         localStorage.setItem("bg_registrations", JSON.stringify(updated));
+        window.dispatchEvent(new Event("bg_registration_added"));
+        window.dispatchEvent(new Event("storage"));
       }
     } catch (e) {
       console.error("Error updating localStorage on registration delete", e);
@@ -3681,6 +3746,8 @@ const AdminPanel = () => {
           return true;
         });
         localStorage.setItem("bg_payments", JSON.stringify(updated));
+        window.dispatchEvent(new Event("bg_payment_added"));
+        window.dispatchEvent(new Event("storage"));
       }
     } catch (e) {
       console.error("Error updating localStorage on payment delete", e);
