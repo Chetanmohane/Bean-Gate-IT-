@@ -374,16 +374,7 @@ const Offer = ({
                 </div>
               </div>
 
-              {/* Seats Progress Block (Positioned at bottom) */}
-              <div className="text-left bg-white/[0.02] border border-white/5 rounded-2xl p-4">
-                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden mb-2.5">
-                  <div className="h-full bg-[#ff6600] rounded-full transition-all duration-1000" style={{ width: `${seatsPercentage}%` }}></div>
-                </div>
-                <div className="flex justify-between items-center text-xs font-extrabold">
-                  <span className="text-yellow-400 tracking-wide">{seatsLeft} / {totalSeats} Seats Left</span>
-                  <span className="text-red-400 text-[10px] uppercase tracking-wider animate-pulse">Selling Fast!</span>
-                </div>
-              </div>
+
 
             </div>
           </div>
